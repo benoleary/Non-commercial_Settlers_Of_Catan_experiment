@@ -5,7 +5,7 @@
  */
 
 import { HexMatrix, ImmutableHex, LandType } from "../game/board/hex"
-import { ProductionRollScore, ResourceType } from "../game/resource/resource";
+import { ProductionRollScore } from "../game/resource/resource";
 
 type CouldHaveEmoji = LandType | "robber";
 
