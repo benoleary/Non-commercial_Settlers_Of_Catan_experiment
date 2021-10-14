@@ -1,6 +1,6 @@
 import { ProductionRollScore, ResourceType } from "../resource/resource";
 type ProductiveType = "hills" | "forest" | "mountains" | "fields" | "pasture";
-type LandType = ProductiveType | "desert";
+export type LandType = ProductiveType | "desert";
 
 // We can build hex classes on an abstract base since there is going to be no multiple
 // inheritance.
@@ -62,7 +62,8 @@ export abstract class MutableProductiveHex extends MutableHex {
 // as a width of 5 land hexes, the board fits on a 5 by 5 grid.
 type GridHex<T extends ImmutableHex> = T | undefined;
 type HexRow<T extends ImmutableHex> = [GridHex<T>, GridHex<T>, GridHex<T>, GridHex<T>, GridHex<T>];
-type HexMatrix<T extends ImmutableHex> = [HexRow<T>, HexRow<T>, HexRow<T>, HexRow<T>, HexRow<T>];
+export type HexMatrix<T extends ImmutableHex>
+    = [HexRow<T>, HexRow<T>, HexRow<T>, HexRow<T>, HexRow<T>];
 
 class DesertHex extends MutableHex {
     get landType(): LandType { return "desert"; }

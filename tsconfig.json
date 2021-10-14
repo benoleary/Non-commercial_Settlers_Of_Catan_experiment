@@ -6,7 +6,7 @@
         "strict": true,
         "noImplicitReturns": true,
         "esModuleInterop": true,
-        "noUncheckedIndexedAccess": true,
+        "noUncheckedIndexedAccess": true
     },
     "files": ["main.ts"]
 }
