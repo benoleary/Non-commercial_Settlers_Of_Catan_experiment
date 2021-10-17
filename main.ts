@@ -18,3 +18,4 @@ let exampleGame = new Game(HexBoard.getFullyRandomBoard());
 let boardVisualization = new BoardVisualization(process.argv.includes(emojiArgument));
 
 console.log(boardVisualization.asString(exampleGame.viewBoard()));
+console.log(boardVisualization.describeAllNeighborSets(exampleGame.viewBoard()));

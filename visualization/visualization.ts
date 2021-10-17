@@ -82,14 +82,50 @@ export class BoardVisualization {
         // Reverse order because I read co-ordinates as vertical increasing from bottom to top.
         for (let rowIndex = hexBoard.length - 1; rowIndex >= 0; rowIndex--) {
             const offsetHalves = hexBoard.length - 1 - rowIndex;
-            returnString += this.rowAsString(offsetHalves, hexBoard[rowIndex]);
+            returnString += this.rowAsString(offsetHalves, hexBoard[rowIndex]!);
+        }
+
+        return returnString;
+    }
+
+    describeHex(hexToDescribe: ImmutableHex | undefined): string {
+        if (hexToDescribe == undefined) {
+            return "(empty)"
+        }
+
+        const numberText = hexToDescribe.productionRollScore ?? "(none)";
+        return `${this.wideCharacterFor(hexToDescribe.landType)} ${numberText}`;
+    }
+
+    describeNeighbors(hexToDescribe: ImmutableHex | undefined): string {
+        if (hexToDescribe == undefined) {
+            return "(empty, no knowledge of neighbors)";
+        }
+
+        return (
+            `selected: [${this.describeHex(hexToDescribe)}]`
+            + `  NE: [${this.describeHex(hexToDescribe.getNeighbor("NorthEast"))}]`
+            + `  PE: [${this.describeHex(hexToDescribe.getNeighbor("PureEast"))}]`
+            + `  SE: [${this.describeHex(hexToDescribe.getNeighbor("SouthEast"))}]`
+            + `  SW: [${this.describeHex(hexToDescribe.getNeighbor("SouthWest"))}]`
+            + `  PW: [${this.describeHex(hexToDescribe.getNeighbor("PureWest"))}]`
+            + `  NW: [${this.describeHex(hexToDescribe.getNeighbor("NorthWest"))}]`
+        );
+    }
+
+    describeAllNeighborSets(hexBoard: HexMatrix<ImmutableHex>): string {
+        let returnString = "";
+        for (let indexOfRow = 0; indexOfRow < hexBoard.length; indexOfRow++) {
+            for (let indexInRow = 0; indexInRow < hexBoard[indexOfRow]!.length; indexInRow++) {
+                returnString +=
+                this.describeNeighbors(hexBoard[indexOfRow]![indexInRow]) + "\n";
+            }
         }
 
         return returnString;
     }
 
     private wideCharacterFor: (inputType: CouldHaveEmoji) => string
-
 
     private rowAsString(offsetHexHalves: number, hexRow: (ImmutableHex | undefined)[]): string {
         const textHexes: TextHex[] =
@@ -99,10 +135,10 @@ export class BoardVisualization {
 
         let rowAsString = "\n";
         const offsetString = "   ".repeat(offsetHexHalves);
-        for (let rowIndex = 0; rowIndex < 4; rowIndex++) {
+        for (let textIndex = 0; textIndex < 4; textIndex++) {
             rowAsString +=
                 offsetString
-                + textHexes.map(textHex =>textHex.textLines[rowIndex]).join("  ")
+                + textHexes.map(textHex =>textHex.textLines[textIndex]).join("  ")
                 + "\n";
         }
 

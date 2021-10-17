@@ -2,6 +2,9 @@ import { ProductionRollScore, ResourceType } from "../resource/resource";
 type ProductiveType = "hills" | "forest" | "mountains" | "fields" | "pasture";
 export type LandType = ProductiveType | "desert";
 
+type HexToHexDirection =
+    "NorthEast" | "PureEast" | "SouthEast" | "SouthWest" | "PureWest" | "NorthWest";
+
 // We can build hex classes on an abstract base since there is going to be no multiple
 // inheritance.
 export abstract class ImmutableHex {
@@ -12,19 +15,139 @@ export abstract class ImmutableHex {
         return this.isOccupiedByRobber;
     }
 
-    // This class should be constructed with information about any of its corners which are ports
-    // because this is fixed from the creation of the board and is important information to be read
-    // by players, but I have decided that implementation of ports is a stretch goal for this
-    // project.
+    /**
+     * This should return the neighbor of this hex in the given direction.
+     *
+     * This is really just exposing some debugging functionality, since only mutable hexes are
+     * going to need to know about their neighbors. External components which know only about
+     * immutable hexes will also know about their board positions so will not need to query the
+     * hexes about their neighbors. However, it is harmless to allow it.
+     *
+     * @param neighborDirection The direction of the neighbor from the receiver hex
+     */
+    abstract getNeighbor(neighborDirection: HexToHexDirection): ImmutableHex | undefined
+
     protected constructor(
         public readonly productionRollScore: ProductionRollScore | undefined,
         protected isOccupiedByRobber: boolean
-    ) { }
+    ) {
+        // This class should be constructed with information about any of its corners which are ports
+        // because this is fixed from the creation of the board and is important information to be read
+        // by players, but I have decided that implementation of ports is a stretch goal for this
+        // project.
+    }
+
+    protected static neighborIndex(neighborDirection: HexToHexDirection): number | undefined {
+        // This is just to avoid getting confused abotu which number means which direction.
+        if (neighborDirection == "NorthEast") {
+            return 0;
+        }
+        if (neighborDirection == "PureEast") {
+            return 1;
+        }
+        if (neighborDirection == "SouthEast") {
+            return 2;
+        }
+        if (neighborDirection == "SouthWest") {
+            return 3;
+        }
+        if (neighborDirection == "PureWest") {
+            return 4;
+        }
+        if (neighborDirection == "NorthWest") {
+            return 5;
+        }
+
+        return undefined;
+    }
 }
 
 type HexCallback = (producedResource: ResourceType) => void;
 
 export abstract class MutableHex extends ImmutableHex {
+    getNeighbor(neighborDirection: HexToHexDirection): ImmutableHex | undefined {
+        const directionIndex = ImmutableHex.neighborIndex(neighborDirection);
+
+        // TypeScript really should know that all the HexToHexDirection cases are covered and that
+        // neighborIndex will never return undefined... but apparently it does not know that.
+        if (directionIndex == undefined) {
+            return undefined;
+        }
+
+        return this.nearestNeighbors[directionIndex];
+    }
+
+    /**
+     * This links the given hex to the receiver hex as its eastern neighbor and also sets this
+     * eastern neighbor as the south-eastern neighbor of the receiver hex's north-eastern neighbor
+     * and as the north-eastern neighbor of the receiver hex's south-eastern neighbor, if such
+     * neighbors exist.
+     *
+     * @param pureEasternNeighbor The hex which has been placed to the east of the receiver hex
+     */
+    setPureEasternNeighbor(pureEasternNeighbor: (MutableHex | undefined)): void {
+        this.nearestNeighbors[ImmutableHex.neighborIndex("PureEast")!] = pureEasternNeighbor;
+
+        const northEasternNeighbor =
+            this.nearestNeighbors[ImmutableHex.neighborIndex("NorthEast")!];
+        if (northEasternNeighbor != undefined) {
+            northEasternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("SouthEast")!]
+                = pureEasternNeighbor;
+        }
+        const southEasternNeighbor =
+            this.nearestNeighbors[ImmutableHex.neighborIndex("SouthEast")!];
+        if (southEasternNeighbor != undefined) {
+            southEasternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("NorthEast")!]
+                = pureEasternNeighbor;
+        }
+
+        // The new neighbor also needs to know about the hexes already in place.
+        if (pureEasternNeighbor != undefined) {
+            pureEasternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("PureWest")!]
+                = this;
+            pureEasternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("NorthWest")!]
+                = northEasternNeighbor;
+            pureEasternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("SouthWest")!]
+                = southEasternNeighbor;
+        }
+    }
+
+    /**
+     * This links the given hex to the receiver hex as its north-western neighbor and also sets
+     * this north-western neighbor as the western neighbor of the receiver hex's north-eastern
+     * neighbor and as the north-eastern neighbor of the receiver hex's western neighbor, if such
+     * neighbors exist.
+     *
+     * @param northWesternNeighbor The hex which has been placed to the north-west of the receiver
+     *                             hex
+     */
+    setNorthWesternNeighbor(northWesternNeighbor: (MutableHex | undefined)): void {
+        this.nearestNeighbors[ImmutableHex.neighborIndex("NorthWest")!] = northWesternNeighbor;
+
+        const northEasternNeighbor =
+            this.nearestNeighbors[ImmutableHex.neighborIndex("NorthEast")!];
+        if (northEasternNeighbor != undefined) {
+            northEasternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("PureWest")!]
+                = northWesternNeighbor;
+        }
+        const pureWesternNeighbor =
+            this.nearestNeighbors[ImmutableHex.neighborIndex("PureWest")!];
+        if (pureWesternNeighbor != undefined) {
+            pureWesternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("NorthEast")!]
+                = northWesternNeighbor;
+        }
+
+        // The new neighbor also needs to know about the hexes already in place.
+        if (northWesternNeighbor != undefined) {
+            northWesternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("SouthEast")!]
+                = this;
+            northWesternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("PureEast")!]
+                = northEasternNeighbor;
+            northWesternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("SouthWest")!]
+                = pureWesternNeighbor;
+        }
+    }
+
     abstract onProductionRoll(callbackFunction: HexCallback): void
 
     protected constructor(
@@ -32,15 +155,25 @@ export abstract class MutableHex extends ImmutableHex {
         protected isOccupiedByRobber: boolean
     ) {
         super(productionRollScore, isOccupiedByRobber);
+
+        this.nearestNeighbors = [undefined, undefined, undefined, undefined, undefined, undefined];
     }
+
+    protected nearestNeighbors: (MutableHex | undefined)[]
 }
 
 export abstract class MutableProductiveHex extends MutableHex {
-    // We do not need a method to remove observers because this is used only for settlements or
-    // cities, and the implementation is the same object in a different state, so the callback
-    // remains the same, and also settlements are never destroyed, only upgraded, and cities are
-    // never destroyed.
+    /**
+     * This accepts a callback to invoke if this hex is activated because the dice rolled its core,
+     * and the callback will be given the value of the resource type of this hex.
+     *
+     * @param callbackFunction A function to invoke when the dice roll the score of this hex
+     */
     onProductionRoll(callbackFunction: HexCallback): void {
+        // We do not need a method to remove observers because this is used only for settlements or
+        // cities, and the implementation is the same object in a different state, so the callback
+        // remains the same, and also settlements are never destroyed, only upgraded, and cities
+        // are never destroyed.
         this.callbackFunctions.push(callbackFunction);
     }
 
@@ -49,7 +182,6 @@ export abstract class MutableProductiveHex extends MutableHex {
         protected isOccupiedByRobber: boolean
     ) {
         super(productionRollScore, isOccupiedByRobber);
-
         this.callbackFunctions = [];
     }
 
@@ -125,6 +257,7 @@ class PastureHex extends MutableProductiveHex {
     get producedResource(): ResourceType { return "wool"; }
 
     constructor(public readonly productionRollScore: ProductionRollScore) {
+        // Only the desert hex starts with the robber piece.
         super(productionRollScore, false);
      }
 }
@@ -188,11 +321,29 @@ export class HexBoard {
             [undefined, undefined, undefined, undefined, undefined],
             [undefined, undefined, undefined, undefined, undefined],
         ];
-        for (let verticalIndex = 0; verticalIndex < 5; verticalIndex++) {
-            for (let horizontalIndex = 0; horizontalIndex < 5; horizontalIndex++) {
-                const indexInSpiral = indexPlusOneMapping[verticalIndex]![horizontalIndex]! - 1;
+        for (let verticalIndex = 0; verticalIndex < indexPlusOneMapping.length; verticalIndex++) {
+            const indexRow = indexPlusOneMapping[verticalIndex]!;
+            for (let horizontalIndex = 0; horizontalIndex < indexRow.length; horizontalIndex++) {
+                const indexInSpiral = indexRow[horizontalIndex]! - 1;
                 if (indexInSpiral >= 0) {
-                    this.mutableHexes[verticalIndex]![horizontalIndex] = inAlmanacSpiralOrder[indexInSpiral];
+                    const hexBeingPlaced = inAlmanacSpiralOrder[indexInSpiral];
+                    this.mutableHexes[verticalIndex]![horizontalIndex] = hexBeingPlaced;
+
+                    // If this is a new neighbor for existing hexes, we need to update them.
+                    const pureWesternNeighbor =
+                        horizontalIndex > 0
+                        ? this.mutableHexes[verticalIndex]![horizontalIndex - 1]!
+                        : undefined;
+                    if (pureWesternNeighbor != undefined) {
+                        pureWesternNeighbor.setPureEasternNeighbor(hexBeingPlaced);
+                    }
+                    const southEasternNeighbor =
+                        verticalIndex > 0
+                        ? this.mutableHexes[verticalIndex - 1]![horizontalIndex]!
+                        : undefined;
+                    if (southEasternNeighbor != undefined) {
+                        southEasternNeighbor.setNorthWesternNeighbor(hexBeingPlaced);
+                    }
                 }
             }
         }

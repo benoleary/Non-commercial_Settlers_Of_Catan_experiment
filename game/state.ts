@@ -4,6 +4,6 @@ export class Game {
     constructor(private hexBoard: HexBoard) { }
 
     viewBoard(): HexMatrix<ImmutableHex> {
-        return this.hexBoard.viewBoard()
+        return this.hexBoard.viewBoard();
     }
 }
