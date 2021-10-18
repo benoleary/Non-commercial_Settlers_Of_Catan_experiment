@@ -3,9 +3,14 @@ import { ResourceType } from "../resource/resource";
 // This could probably be much more elaborate for a real implementation of the game.
 export type PlayerId = "p1" | "p2" | "p3" | "p4";
 
-export class TradeOnlyPlayer {
-    offerTrade<T extends TradeOnlyPlayer>(
-        otherPlayer: T,
+export class AuthenticatedPlayer {
+    constructor(public readonly playerName: string) {
+        this.fullyOwnedResources = [];
+        this.offeredTrades = new Map<PlayerId, ResourceType[]>();
+    }
+
+    offerTrade(
+        otherPlayer: AuthenticatedPlayer,
         offeredResources: Iterable<ResourceType>,
         requestedResources: Iterable<ResourceType>
     ): boolean {
@@ -16,8 +21,4 @@ export class TradeOnlyPlayer {
 
     protected fullyOwnedResources: ResourceType[]
     protected offeredTrades: Map<PlayerId, ResourceType[]>
-}
-
-export class ActivePlayer extends TradeOnlyPlayer {
-
 }

@@ -1,7 +1,6 @@
 import { HexBoard } from "./game/board/hex"
 import { Game } from "./game/state"
 import { BoardVisualization } from "./visualization/visualization"
-import { ActivePlayer, PlayerId, TradeOnlyPlayer } from "./game/player/player"
 
 console.log("Example game played with occasional logging of relevant state");
 
@@ -20,7 +19,7 @@ if (["-h", "-help", "--help"].some(helpArgument => process.argv.includes(helpArg
     process.exit();
 }
 
-let exampleGame = new Game(HexBoard.getFullyRandomBoard());
+let exampleGame = new Game(HexBoard.getFullyRandomBoard(), ["p1", "p2", "p3", "p4"]);
 let boardVisualization = new BoardVisualization(process.argv.includes(emojiArgument));
 
 
@@ -39,9 +38,10 @@ const readlineInterface = readlineImport.createInterface({
 });
 
 
-while(exampleGame.getPhase() != "Finished") {
+while(exampleGame.getPhase() == "InitialPlacement") {
     console.log(boardVisualization.asString(exampleGame.viewBoard()));
 
+    // TODO: this does not work as I expected, there is no pause waiting for input.
     readlineInterface.question("Please choose a player: p1, p2, p3, or p4", (readInput: string) => {
         const playerIssuingCommand = exampleGame.getPlayer(readInput);
     });
