@@ -1,6 +1,7 @@
 import { HexBoard } from "./game/board/hex"
 import { Game } from "./game/state"
 import { BoardVisualization } from "./visualization/visualization"
+import promptSync from 'prompt-sync';
 
 console.log("Example game played with occasional logging of relevant state");
 
@@ -30,14 +31,16 @@ if (process.argv.includes(neighborDebuggingArgument)) {
     process.exit();
 }
 
-const readlineImport = require('readline');
 
-const readlineInterface = readlineImport.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
+const consolePrompt = promptSync();
 
+console.log("Enter command in form \"player row-from-bottom hex-in-row corner-of-hex direction-of-road-from-corner\"");
+console.log("E.g \"1 1 1 NW NE\" for player 1 to put an initial settlement on the westmost hex of the southernmost");
+console.log("row on its north-western corner with a road going north-east");
+const playerRequest = consolePrompt("Command: ");
+console.log(`You entered: \"${playerRequest}\"`);
 
+/*
 while(exampleGame.getPhase() == "InitialPlacement") {
     console.log(boardVisualization.asString(exampleGame.viewBoard()));
 
@@ -46,4 +49,5 @@ while(exampleGame.getPhase() == "InitialPlacement") {
         const playerIssuingCommand = exampleGame.getPlayer(readInput);
     });
 }
-readlineInterface.close();
+*/
+
