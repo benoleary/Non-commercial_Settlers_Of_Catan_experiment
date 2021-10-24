@@ -8,7 +8,7 @@ export type RequestResult = [RequestEffect, string]
 
 export class Game {
     constructor(private hexBoard: HexBoard, playerNamesInTurnOrder: PlayerNamesInTurnOrder) {
-        this.internalState = new GameInInitialPlacement(playerNamesInTurnOrder);
+        this.internalState = new GameInFirstInitialPlacement(playerNamesInTurnOrder);
      }
 
     viewBoard(): HexMatrix<ImmutableHex> {
@@ -22,6 +22,10 @@ export class Game {
 
     getPlayer(playerIdentifier: string): AuthenticatedPlayer | undefined {
         return this.internalState.getPlayer(playerIdentifier);
+    }
+
+    getActivePlayerName(): string | undefined {
+        return this.internalState.getActivePlayerName();
     }
 
     // TODO: make this a fancy wrapper around calling a CanTakePlayerRequests method with
@@ -48,6 +52,8 @@ interface CanTakePlayerRequests {
     ): [CanTakePlayerRequests, RequestResult]
 
     getPlayer(playerIdentifier: string): AuthenticatedPlayer | undefined
+
+    getActivePlayerName(): string | undefined
 }
 
 class InternalState {
@@ -65,30 +71,56 @@ class InternalState {
     }
 }
 
-class GameInInitialPlacement implements CanTakePlayerRequests {
+abstract class GameInInitialPlacement implements CanTakePlayerRequests {
+    abstract placeInitialSettlement(
+        requestingPlayer: AuthenticatedPlayer
+    ): [CanTakePlayerRequests, RequestResult]
+
+    getPlayer(playerIdentifier: string): AuthenticatedPlayer | undefined {
+        return this.internalState.playersByName[playerIdentifier];
+    }
+
+    getActivePlayerName(): string | undefined {
+        return this.playersInPlacementOrder[0]?.playerName;
+    }
+
+    constructor(
+        protected internalState: InternalState,
+        protected playersInPlacementOrder: AuthenticatedPlayer[]
+    ) { }
+}
+
+class GameInFirstInitialPlacement extends GameInInitialPlacement {
     placeInitialSettlement(
         requestingPlayer: AuthenticatedPlayer
     ): [CanTakePlayerRequests, RequestResult] {
         return [this, ["RefusedSameTurn", "not yet implemented"]];
     }
 
-    getPlayer(playerIdentifier: string): AuthenticatedPlayer | undefined {
-        return this.internalState.playersByName[playerIdentifier];
-    }
-
     constructor(playerNamesInTurnOrder: PlayerNamesInTurnOrder) {
-        this.internalState =
-            new InternalState(
-                "InitialPlacement",
-                playerNamesInTurnOrder.map(playerName => new AuthenticatedPlayer(playerName))
-            );
-
-        this.playersInPlacementOrder =
-            this.internalState.playersInTurnOrder.concat(
-                this.internalState.playersInTurnOrder.slice().reverse()
-            );
+        const initialState = new InternalState(
+            "InitialPlacement",
+            playerNamesInTurnOrder.map(playerName => new AuthenticatedPlayer(playerName))
+        );
+        super(
+            initialState,
+            initialState.playersInTurnOrder.slice()
+        );
     }
 
-    private internalState: InternalState
-    private playersInPlacementOrder: AuthenticatedPlayer[]
+}
+
+class GameInSecondInitialPlacement extends GameInInitialPlacement {
+    placeInitialSettlement(
+        requestingPlayer: AuthenticatedPlayer
+    ): [CanTakePlayerRequests, RequestResult] {
+        return [this, ["RefusedSameTurn", "not yet implemented"]];
+    }
+
+    constructor(stateAfterFirstPlacements: InternalState) {
+        super(
+            stateAfterFirstPlacements,
+            stateAfterFirstPlacements.playersInTurnOrder.slice().reverse()
+        );
+    }
 }

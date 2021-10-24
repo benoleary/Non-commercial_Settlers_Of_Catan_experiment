@@ -34,20 +34,16 @@ if (process.argv.includes(neighborDebuggingArgument)) {
 
 const consolePrompt = promptSync();
 
-console.log("Enter command in form \"player row-from-bottom hex-in-row corner-of-hex direction-of-road-from-corner\"");
-console.log("E.g \"1 1 1 NW NE\" for player 1 to put an initial settlement on the westmost hex of the southernmost");
-console.log("row on its north-western corner with a road going north-east");
-const playerRequest = consolePrompt("Command: ");
-console.log(`You entered: \"${playerRequest}\"`);
-
-/*
 while(exampleGame.getPhase() == "InitialPlacement") {
     console.log(boardVisualization.asString(exampleGame.viewBoard()));
-
-    // TODO: this does not work as I expected, there is no pause waiting for input.
-    readlineInterface.question("Please choose a player: p1, p2, p3, or p4", (readInput: string) => {
-        const playerIssuingCommand = exampleGame.getPlayer(readInput);
-    });
+    console.log(`Initial settlement placement phase. Active player is ${exampleGame.getActivePlayerName()}`);
+    console.log("Enter command in form \"player row-from-bottom hex-in-row corner-of-hex direction-of-road-from-corner\"");
+    console.log("E.g \"1 1 1 NW NE\" for player 1 to put an initial settlement on the westmost hex of the southernmost");
+    console.log("row on its north-western corner with a road going north-east");
+    console.log("(Enter \"exit\" or \"quit\" to end this program");
+    const playerRequest = consolePrompt("Command: ");
+    console.log(`You entered: \"${playerRequest}\"`);
+    if ((playerRequest == "exit") || (playerRequest == "quit")) {
+        process.exit();
+    }
 }
-*/
-
