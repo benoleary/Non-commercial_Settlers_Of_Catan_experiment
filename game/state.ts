@@ -16,8 +16,7 @@ export class Game {
     }
 
     getPhase(): GamePhase {
-        // TODO: change one the game has states.
-        return "InitialPlacement";
+        return this.internalState.getPhase();
     }
 
     getPlayer(playerIdentifier: string): AuthenticatedPlayer | undefined {
@@ -28,8 +27,6 @@ export class Game {
         return this.internalState.getActivePlayerName();
     }
 
-    // TODO: make this a fancy wrapper around calling a CanTakePlayerRequests method with
-    // variadic arguments.
     placeInitialSettlement(
         requestingPlayerIdentifier: string,
         rowIndexFromOneInBoard: number,
@@ -37,29 +34,41 @@ export class Game {
         settlementCorner: string,
         roadDirectionFromSettlement: string
     ): RequestResult {
+        return this.validateThenDelegate(
+            requestingPlayerIdentifier,
+            (requestingPlayer: AuthenticatedPlayer) =>
+                this.internalState.placeInitialSettlement(
+                    requestingPlayer,
+                    rowIndexFromOneInBoard,
+                    hexIndexFromOneInRow,
+                    settlementCorner,
+                    roadDirectionFromSettlement
+                )
+        );
+    }
+
+    private internalState: CanTakePlayerRequests
+
+    private validateThenDelegate(
+        requestingPlayerIdentifier: string,
+        delegatedFunction: (requestingPlayer: AuthenticatedPlayer) => [CanTakePlayerRequests, RequestResult]
+    ): RequestResult {
         const requestingPlayer = this.getPlayer(requestingPlayerIdentifier);
         if (requestingPlayer == undefined) {
             return ["RefusedSameTurn", `Unknown player ${requestingPlayerIdentifier}`];
         }
 
-        const internalResult =
-            this.internalState.placeInitialSettlement(
-                requestingPlayer,
-                rowIndexFromOneInBoard,
-                hexIndexFromOneInRow,
-                settlementCorner,
-                roadDirectionFromSettlement
-            );
+        const delegatedResult = delegatedFunction(requestingPlayer);
 
-        this.internalState = internalResult[0];
-        return internalResult[1];
+        this.internalState = delegatedResult[0];
+        return delegatedResult[1];
     }
-
-    private internalState: CanTakePlayerRequests
 }
 
 
 interface CanTakePlayerRequests {
+    getPhase(): GamePhase
+
     placeInitialSettlement(
         requestingPlayerIdentifier: AuthenticatedPlayer,
         rowIndexFromOneInBoard: number,
@@ -89,6 +98,10 @@ class InternalState {
 }
 
 abstract class GameInInitialPlacement implements CanTakePlayerRequests {
+    getPhase(): GamePhase {
+        return this.internalState.gamePhase;
+    }
+
     abstract placeInitialSettlement(
         requestingPlayer: AuthenticatedPlayer,
         rowIndexFromOneInBoard: number,
@@ -102,13 +115,17 @@ abstract class GameInInitialPlacement implements CanTakePlayerRequests {
     }
 
     getActivePlayerName(): string | undefined {
-        return this.playersInPlacementOrder[0]?.playerName;
+        return this.getActivePlayer()?.playerName;
     }
 
     constructor(
         protected internalState: InternalState,
         protected playersInPlacementOrder: AuthenticatedPlayer[]
     ) { }
+
+    protected getActivePlayer(): AuthenticatedPlayer | undefined {
+        return this.playersInPlacementOrder[0];
+    }
 }
 
 class GameInFirstInitialPlacement extends GameInInitialPlacement {
@@ -119,7 +136,13 @@ class GameInFirstInitialPlacement extends GameInInitialPlacement {
         settlementCorner: string,
         roadDirectionFromSettlement: string
     ): [CanTakePlayerRequests, RequestResult] {
-        return [this, ["RefusedSameTurn", "not yet implemented"]];
+        if (requestingPlayer != this.getActivePlayer()) {
+            const refusalMessage =
+                `${requestingPlayer.playerName} is not the active player,`
+                + ` ${this.getActivePlayer()?.playerName} is`;
+            return [this, ["RefusedSameTurn", refusalMessage]];
+        }
+        return [this, ["RefusedSameTurn", "not yet fully implemented"]];
     }
 
     constructor(playerNamesInTurnOrder: PlayerNamesInTurnOrder) {
