@@ -30,13 +30,26 @@ export class Game {
 
     // TODO: make this a fancy wrapper around calling a CanTakePlayerRequests method with
     // variadic arguments.
-    placeInitialSettlement(requestingPlayerIdentifier: string): RequestResult {
+    placeInitialSettlement(
+        requestingPlayerIdentifier: string,
+        rowIndexFromOneInBoard: number,
+        hexIndexFromOneInRow: number,
+        settlementCorner: string,
+        roadDirectionFromSettlement: string
+    ): RequestResult {
         const requestingPlayer = this.getPlayer(requestingPlayerIdentifier);
         if (requestingPlayer == undefined) {
             return ["RefusedSameTurn", `Unknown player ${requestingPlayerIdentifier}`];
         }
 
-        const internalResult = this.internalState.placeInitialSettlement(requestingPlayer);
+        const internalResult =
+            this.internalState.placeInitialSettlement(
+                requestingPlayer,
+                rowIndexFromOneInBoard,
+                hexIndexFromOneInRow,
+                settlementCorner,
+                roadDirectionFromSettlement
+            );
 
         this.internalState = internalResult[0];
         return internalResult[1];
@@ -48,7 +61,11 @@ export class Game {
 
 interface CanTakePlayerRequests {
     placeInitialSettlement(
-        requestingPlayer: AuthenticatedPlayer
+        requestingPlayerIdentifier: AuthenticatedPlayer,
+        rowIndexFromOneInBoard: number,
+        hexIndexFromOneInRow: number,
+        settlementCorner: string,
+        roadDirectionFromSettlement: string
     ): [CanTakePlayerRequests, RequestResult]
 
     getPlayer(playerIdentifier: string): AuthenticatedPlayer | undefined
@@ -73,7 +90,11 @@ class InternalState {
 
 abstract class GameInInitialPlacement implements CanTakePlayerRequests {
     abstract placeInitialSettlement(
-        requestingPlayer: AuthenticatedPlayer
+        requestingPlayer: AuthenticatedPlayer,
+        rowIndexFromOneInBoard: number,
+        hexIndexFromOneInRow: number,
+        settlementCorner: string,
+        roadDirectionFromSettlement: string
     ): [CanTakePlayerRequests, RequestResult]
 
     getPlayer(playerIdentifier: string): AuthenticatedPlayer | undefined {
@@ -92,7 +113,11 @@ abstract class GameInInitialPlacement implements CanTakePlayerRequests {
 
 class GameInFirstInitialPlacement extends GameInInitialPlacement {
     placeInitialSettlement(
-        requestingPlayer: AuthenticatedPlayer
+        requestingPlayer: AuthenticatedPlayer,
+        rowIndexFromOneInBoard: number,
+        hexIndexFromOneInRow: number,
+        settlementCorner: string,
+        roadDirectionFromSettlement: string
     ): [CanTakePlayerRequests, RequestResult] {
         return [this, ["RefusedSameTurn", "not yet implemented"]];
     }
@@ -112,7 +137,11 @@ class GameInFirstInitialPlacement extends GameInInitialPlacement {
 
 class GameInSecondInitialPlacement extends GameInInitialPlacement {
     placeInitialSettlement(
-        requestingPlayer: AuthenticatedPlayer
+        requestingPlayer: AuthenticatedPlayer,
+        rowIndexFromOneInBoard: number,
+        hexIndexFromOneInRow: number,
+        settlementCorner: string,
+        roadDirectionFromSettlement: string
     ): [CanTakePlayerRequests, RequestResult] {
         return [this, ["RefusedSameTurn", "not yet implemented"]];
     }
