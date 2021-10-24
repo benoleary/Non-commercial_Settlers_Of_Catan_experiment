@@ -1,6 +1,7 @@
 import { HexBoard } from "./game/board/hex"
 import { Game } from "./game/state"
 import { BoardVisualization } from "./visualization/visualization"
+import { ConsoleInterface } from "./interaction/console"
 import promptSync from 'prompt-sync';
 
 console.log("Example game played with occasional logging of relevant state");
@@ -21,7 +22,7 @@ if (["-h", "-help", "--help"].some(helpArgument => process.argv.includes(helpArg
 }
 
 const playerNamesInTurnOrder: [string, string, string, string] = ["p1", "p2", "p3", "p4"];
-let exampleGame = new Game(HexBoard.getFullyRandomBoard(), playerNamesInTurnOrder);
+let exampleGame = new Game(playerNamesInTurnOrder, HexBoard.getFullyRandomBoard());
 let boardVisualization = new BoardVisualization(process.argv.includes(emojiArgument));
 
 
@@ -32,62 +33,50 @@ if (process.argv.includes(neighborDebuggingArgument)) {
     process.exit();
 }
 
-const errorSignifier = "ERROR";
-function parsePlayerRequest(
-    unparsedText: string,
-    expectedTotalNumberOfWords: number
-): [string, string[]] {
-    const parsedWords =
-        unparsedText.split(" ")
-        .map(untrimmedString => untrimmedString.trim())
-        .filter(trimmedString => trimmedString);
-
-    if (parsedWords.length != expectedTotalNumberOfWords) {
-        return [
-            errorSignifier,
-            [`Expected ${expectedTotalNumberOfWords} \"words\", got ${parsedWords.length}`]
-        ];
-    }
-
-    const parsedPlayer = `p${parsedWords[0]}`;
-    if (!playerNamesInTurnOrder.includes(parsedPlayer)) {
-        return [
-            errorSignifier,
-            [`Could not understand ${parsedPlayer} as player (valid: ${playerNamesInTurnOrder})`]
-        ];
-    }
-
-    return [parsedPlayer, parsedWords.slice(1)];
-}
-
-const consolePrompt = promptSync();
+const consoleInterface =
+    new ConsoleInterface(
+        promptSync(),
+        playerNamesInTurnOrder,
+        exampleGame,
+        boardVisualization,
+        ["exit", "quit"]
+    );
 
 // We display the board before the loop so that each iteration can show the changed state after the
 // command has been processed (and display information text beneath the board where it might be
 // noticed).
-console.log(boardVisualization.asString(exampleGame.viewBoard()));
+consoleInterface.showBoard();
 while(exampleGame.getPhase() == "InitialPlacement") {
-    console.log("Initial settlement placement phase.");
-    console.log(`The active player is ${exampleGame.getActivePlayerName()}`);
-    console.log("Enter your command in the following form:");
-    console.log("player row-from-bottom hex-in-row corner-of-hex direction-of-road-from-corner");
-    console.log("E.g. \"1 1 1 NW NE\"");
-    console.log("for player 1 to put an initial settlement on the westmost hex of the");
-    console.log("southernmost row on its north-western corner with a road going north-east");
-    console.log("(Enter \"exit\" or \"quit\" to end this program.)");
-    const rawPlayerRequest = consolePrompt("Command: ");
+    const rawPlayerRequest = consoleInterface.promptInitialPlacement();
 
-    console.log(boardVisualization.asString(exampleGame.viewBoard()));
+    consoleInterface.showBoard();
     console.log("########");
     console.log(`You entered: \"${rawPlayerRequest}\"`);
     console.log("########");
-    if (["EXIT", "QUIT"].includes(rawPlayerRequest.trim().toUpperCase())) {
+    if (consoleInterface.isQuitCommand(rawPlayerRequest)) {
         process.exit();
     }
 
-    const [parsedPlayerIdentifier, parsedRequest] = parsePlayerRequest(rawPlayerRequest, 5);
-    if (parsedPlayerIdentifier == errorSignifier) {
+    const [parsedPlayerIdentifier, parsedRequest] =
+        consoleInterface.parsePlayerRequest(rawPlayerRequest, 5);
+    if (parsedPlayerIdentifier == ConsoleInterface.errorSignifier) {
         console.log(`${parsedRequest[0]}`);
+        console.log("########");
+        continue;
+    }
+
+    const [rowIndexInBoardFromZero, hexIndexInRowFromZero] =
+        consoleInterface.convertToGridIndices(parsedRequest[0]!, parsedRequest[1]!);
+
+    if (rowIndexInBoardFromZero == undefined) {
+        console.log(`Could not understand ${parsedRequest[0]} as a valid row`);
+        console.log("########");
+        continue;
+    }
+    if (hexIndexInRowFromZero == undefined) {
+        console.log(
+            `Could not understand ${parsedRequest[1]} as a valid hex within the chosen row`
+        );
         console.log("########");
         continue;
     }
@@ -95,9 +84,12 @@ while(exampleGame.getPhase() == "InitialPlacement") {
     const requestResult =
         exampleGame.placeInitialSettlement(
             parsedPlayerIdentifier,
-            parseInt(parsedRequest[0]!),
-            parseInt(parsedRequest[1]!),
+            rowIndexInBoardFromZero,
+            hexIndexInRowFromZero,
             parsedRequest[2]!,
             parsedRequest[3]!
         );
+
+    console.log(`Request status: ${requestResult}`);
+    console.log("########");
 }

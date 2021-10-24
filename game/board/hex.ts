@@ -1,6 +1,8 @@
 import { ProductionRollScore, ResourceType } from "../resource/resource";
 type ProductiveType = "hills" | "forest" | "mountains" | "fields" | "pasture";
 export type LandType = ProductiveType | "desert";
+export type RowIndexInBoard = 0 | 1 | 2 | 3 | 4;
+export type HexIndexInRow = 0 | 1 | 2 | 3 | 4;
 
 type HexToHexDirection =
     "NorthEast" | "PureEast" | "SouthEast" | "SouthWest" | "PureWest" | "NorthWest";
@@ -294,6 +296,10 @@ export class HexBoard {
     }
 
     viewBoard(): HexMatrix<ImmutableHex> {
+        return this.mutableHexes;
+    }
+
+    changeBoard(): HexMatrix<MutableHex> {
         return this.mutableHexes;
     }
 
