@@ -81,6 +81,7 @@ while(exampleGame.getPhase() == "InitialPlacement") {
         continue;
     }
 
+    // TODO: parsedRequest[2] to HexCornerDirection and parsedRequest[3] to HexToHexDirection.
     const requestResult =
         exampleGame.placeInitialSettlement(
             parsedPlayerIdentifier,

@@ -31,19 +31,8 @@ function emojiWideCharacterFor(inputType: CouldHaveEmoji): string {
     if (inputType == "desert") {
         return "🏜️ ";
     }
-    if (inputType == "robber") {
-        return "👺";
-    }
-
-    // This should never happen, but TypeScript complains that not all paths are
-    // covered if I do not include a default case, despite understanding perfectly
-    // that the above cases are correct, and there being no logical other case.
-    // It does not even complain that undefined is not part of the type union!
-    if (inputType == undefined) {
-        return "??";
-    }
-
-    return "??";
+    // The only case left is robber.
+    return "👺";
 }
 
 function asciiWideCharacterFor(inputType: CouldHaveEmoji): string {
@@ -65,11 +54,8 @@ function asciiWideCharacterFor(inputType: CouldHaveEmoji): string {
     if (inputType == "desert") {
         return "DD";
     }
-    if (inputType == "robber") {
-        return " R";
-    }
-
-    return "??";
+    // The only case left is robber.
+    return " R";
 }
 
 export class BoardVisualization {
@@ -104,12 +90,12 @@ export class BoardVisualization {
 
         return (
             `selected: [${this.describeHex(hexToDescribe)}]`
-            + `  NE: [${this.describeHex(hexToDescribe.getNeighbor("NorthEast"))}]`
-            + `  PE: [${this.describeHex(hexToDescribe.getNeighbor("PureEast"))}]`
-            + `  SE: [${this.describeHex(hexToDescribe.getNeighbor("SouthEast"))}]`
-            + `  SW: [${this.describeHex(hexToDescribe.getNeighbor("SouthWest"))}]`
-            + `  PW: [${this.describeHex(hexToDescribe.getNeighbor("PureWest"))}]`
-            + `  NW: [${this.describeHex(hexToDescribe.getNeighbor("NorthWest"))}]`
+            + `  NE: [${this.describeHex(hexToDescribe.viewNeighbor("NE"))}]`
+            + `  E:  [${this.describeHex(hexToDescribe.viewNeighbor("E"))}]`
+            + `  SE: [${this.describeHex(hexToDescribe.viewNeighbor("SE"))}]`
+            + `  SW: [${this.describeHex(hexToDescribe.viewNeighbor("SW"))}]`
+            + `  W:  [${this.describeHex(hexToDescribe.viewNeighbor("W"))}]`
+            + `  NW: [${this.describeHex(hexToDescribe.viewNeighbor("NW"))}]`
         );
     }
 

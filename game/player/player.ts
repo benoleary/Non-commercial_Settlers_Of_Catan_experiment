@@ -16,6 +16,7 @@ export class AuthenticatedPlayer {
     ): boolean {
         // TODO: check if this player has the resource, if so then escrow it in offeredTrades,
         // then ...
+        // However, implementing trading is a stretch goal for this project.
         return false;
     }
 

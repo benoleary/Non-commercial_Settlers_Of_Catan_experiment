@@ -1,11 +1,14 @@
+import { AuthenticatedPlayer } from "../player/player";
 import { ProductionRollScore, ResourceType } from "../resource/resource";
+import { RoadPiece, SettlementPiece } from "./piece";
+
 type ProductiveType = "hills" | "forest" | "mountains" | "fields" | "pasture";
 export type LandType = ProductiveType | "desert";
 export type RowIndexInBoard = 0 | 1 | 2 | 3 | 4;
 export type HexIndexInRow = 0 | 1 | 2 | 3 | 4;
 
-type HexToHexDirection =
-    "NorthEast" | "PureEast" | "SouthEast" | "SouthWest" | "PureWest" | "NorthWest";
+export type HexToHexDirection = "NE" | "E" | "SE" | "SW" | "W" | "NW";
+export type HexCornerDirection = "N" | "NE" | "SE" | "S" | "SW" | "NW";
 
 // We can build hex classes on an abstract base since there is going to be no multiple
 // inheritance.
@@ -27,7 +30,7 @@ export abstract class ImmutableHex {
      *
      * @param neighborDirection The direction of the neighbor from the receiver hex
      */
-    abstract getNeighbor(neighborDirection: HexToHexDirection): ImmutableHex | undefined
+    abstract viewNeighbor(neighborDirection: HexToHexDirection): ImmutableHex | undefined
 
     protected constructor(
         public readonly productionRollScore: ProductionRollScore | undefined,
@@ -39,44 +42,165 @@ export abstract class ImmutableHex {
         // project.
     }
 
-    protected static neighborIndex(neighborDirection: HexToHexDirection): number | undefined {
-        // This is just to avoid getting confused abotu which number means which direction.
-        if (neighborDirection == "NorthEast") {
+    protected static edgeIndex(hexEdge: HexToHexDirection): number {
+        // This is just to avoid getting confused about which number means which direction.
+        if (hexEdge == "NE") {
             return 0;
         }
-        if (neighborDirection == "PureEast") {
+        if (hexEdge == "E") {
             return 1;
         }
-        if (neighborDirection == "SouthEast") {
+        if (hexEdge == "SE") {
             return 2;
         }
-        if (neighborDirection == "SouthWest") {
+        if (hexEdge == "SW") {
             return 3;
         }
-        if (neighborDirection == "PureWest") {
+        if (hexEdge == "W") {
             return 4;
         }
-        if (neighborDirection == "NorthWest") {
-            return 5;
-        }
+        // The only case left is NW.
+        return 5;
+    }
 
-        return undefined;
+    protected static cornerIndex(hexCorner: HexCornerDirection): number {
+        // This is just to avoid getting confused about which number means which direction.
+        if (hexCorner == "N") {
+            return 0;
+        }
+        if (hexCorner == "NE") {
+            return 1;
+        }
+        if (hexCorner == "SE") {
+            return 2;
+        }
+        if (hexCorner == "S") {
+            return 3;
+        }
+        if (hexCorner == "SW") {
+            return 4;
+        }
+        // The only case left is NW.
+        return 5;
+    }
+
+    protected static getOppositeEdge(hexEdge: HexToHexDirection): HexToHexDirection {
+        if (hexEdge == "NE") {
+            return "SW";
+        }
+        if (hexEdge == "E") {
+            return "W";
+        }
+        if (hexEdge == "SE") {
+            return "NW";
+        }
+        if (hexEdge == "SW") {
+            return "NE";
+        }
+        if (hexEdge == "W") {
+            return "E";
+        }
+        // The only case left is NW.
+        return "SE";
+    }
+
+    protected static getAnticlockwiseAndClockwiseEdgesNeighboringEdge(
+        hexEdge: HexToHexDirection
+    ): [HexToHexDirection, HexToHexDirection]  {
+        if (hexEdge == "NE") {
+            return ["NW", "E"];
+        }
+        if (hexEdge == "E") {
+            return ["NE", "SE"];
+        }
+        if (hexEdge == "SE") {
+            return ["E", "SW"];
+        }
+        if (hexEdge == "SW") {
+            return ["SE", "W"];
+        }
+        if (hexEdge == "W") {
+            return ["SW", "NW"];
+        }
+        // The only case left is NW.
+        return ["W", "NE"];
+    }
+
+    protected static getAnticlockwiseAndClockwiseEdgesNeighboringCorner(
+        hexCorner: HexCornerDirection
+    ): [HexToHexDirection, HexToHexDirection] {
+        if (hexCorner == "N") {
+            return ["NW", "NE"];
+        }
+        if (hexCorner == "NE") {
+            return ["NE", "E"];
+        }
+        if (hexCorner == "SE") {
+            return ["E", "SE"];
+        }
+        if (hexCorner == "S") {
+            return ["SE", "SW"];
+        }
+        if (hexCorner == "SW") {
+            return ["SW", "W"];
+        }
+        // The only case left is NW.
+        return ["W", "NW"];
+    }
+
+    protected static getCloserCornerNeighboringOppositeEdge(
+        edgeToCorner: HexToHexDirection,
+        cornerDirection: HexCornerDirection
+    ): HexCornerDirection {
+        const originalEdgeCorners =
+            ImmutableHex.getAnticlockwiseAndClockwiseCornersNeighboringEdge(edgeToCorner);
+
+        const isClockwiseFromOriginalEdge = (cornerDirection == originalEdgeCorners[0]);
+
+        const oppositeEdge = ImmutableHex.getOppositeEdge(edgeToCorner);
+        const oppositeEdgeCorners =
+            ImmutableHex.getAnticlockwiseAndClockwiseCornersNeighboringEdge(oppositeEdge);
+        return oppositeEdgeCorners[isClockwiseFromOriginalEdge ? 1 : 0];
+    }
+
+    protected static getAnticlockwiseAndClockwiseCornersNeighboringEdge(
+        hexEdge: HexToHexDirection
+    ): [HexCornerDirection, HexCornerDirection] {
+        if (hexEdge == "NE") {
+            return ["N", "NE"];
+        }
+        if (hexEdge == "E") {
+            return ["NE", "SE"];
+        }
+        if (hexEdge == "SE") {
+            return ["SE", "S"];
+        }
+        if (hexEdge == "SW") {
+            return ["S", "SW"];
+        }
+        if (hexEdge == "W") {
+            return ["SW", "NW"];
+        }
+        // The only case left is NW.
+        return ["NW", "N"];
     }
 }
 
 type HexCallback = (producedResource: ResourceType) => void;
 
 export abstract class MutableHex extends ImmutableHex {
-    getNeighbor(neighborDirection: HexToHexDirection): ImmutableHex | undefined {
-        const directionIndex = ImmutableHex.neighborIndex(neighborDirection);
+    viewNeighbor(neighborDirection: HexToHexDirection): ImmutableHex | undefined {
+        return this.getMutableNeighbor(neighborDirection);
+    }
 
-        // TypeScript really should know that all the HexToHexDirection cases are covered and that
-        // neighborIndex will never return undefined... but apparently it does not know that.
-        if (directionIndex == undefined) {
-            return undefined;
+    setNeighbor(
+        neighborDirection: HexToHexDirection,
+        neighborToNote: MutableHex | undefined
+    ): void {
+        const edgeIndex = ImmutableHex.edgeIndex(neighborDirection);
+        if (edgeIndex != undefined) {
+            this.nearestNeighbors[edgeIndex] = neighborToNote;
         }
-
-        return this.nearestNeighbors[directionIndex];
     }
 
     /**
@@ -87,30 +211,21 @@ export abstract class MutableHex extends ImmutableHex {
      *
      * @param pureEasternNeighbor The hex which has been placed to the east of the receiver hex
      */
-    setPureEasternNeighbor(pureEasternNeighbor: (MutableHex | undefined)): void {
-        this.nearestNeighbors[ImmutableHex.neighborIndex("PureEast")!] = pureEasternNeighbor;
+    setPureEasternNeighborAndUpdateOtherNeighbors(
+        pureEasternNeighbor: MutableHex | undefined
+    ): void {
+        this.setNeighbor("E", pureEasternNeighbor);
 
-        const northEasternNeighbor =
-            this.nearestNeighbors[ImmutableHex.neighborIndex("NorthEast")!];
-        if (northEasternNeighbor != undefined) {
-            northEasternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("SouthEast")!]
-                = pureEasternNeighbor;
-        }
-        const southEasternNeighbor =
-            this.nearestNeighbors[ImmutableHex.neighborIndex("SouthEast")!];
-        if (southEasternNeighbor != undefined) {
-            southEasternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("NorthEast")!]
-                = pureEasternNeighbor;
-        }
+        const northEasternNeighbor = this.getMutableNeighbor("NE");
+        northEasternNeighbor?.setNeighbor("SE", pureEasternNeighbor);
+        const southEasternNeighbor = this.getMutableNeighbor("SE");
+        southEasternNeighbor?.setNeighbor("NE", pureEasternNeighbor);
 
         // The new neighbor also needs to know about the hexes already in place.
         if (pureEasternNeighbor != undefined) {
-            pureEasternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("PureWest")!]
-                = this;
-            pureEasternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("NorthWest")!]
-                = northEasternNeighbor;
-            pureEasternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("SouthWest")!]
-                = southEasternNeighbor;
+            pureEasternNeighbor.setNeighbor("W", this);
+            pureEasternNeighbor.setNeighbor("NW", northEasternNeighbor);
+            pureEasternNeighbor.setNeighbor("SW", southEasternNeighbor);
         }
     }
 
@@ -123,34 +238,269 @@ export abstract class MutableHex extends ImmutableHex {
      * @param northWesternNeighbor The hex which has been placed to the north-west of the receiver
      *                             hex
      */
-    setNorthWesternNeighbor(northWesternNeighbor: (MutableHex | undefined)): void {
-        this.nearestNeighbors[ImmutableHex.neighborIndex("NorthWest")!] = northWesternNeighbor;
+    setNorthWesternNeighborAndUpdateOtherNeighbors(
+        northWesternNeighbor: MutableHex | undefined
+    ): void {
+        this.setNeighbor("NW", northWesternNeighbor);
 
-        const northEasternNeighbor =
-            this.nearestNeighbors[ImmutableHex.neighborIndex("NorthEast")!];
-        if (northEasternNeighbor != undefined) {
-            northEasternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("PureWest")!]
-                = northWesternNeighbor;
-        }
-        const pureWesternNeighbor =
-            this.nearestNeighbors[ImmutableHex.neighborIndex("PureWest")!];
-        if (pureWesternNeighbor != undefined) {
-            pureWesternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("NorthEast")!]
-                = northWesternNeighbor;
-        }
+        const northEasternNeighbor = this.getMutableNeighbor("NE");
+        northEasternNeighbor?.setNeighbor("W", northWesternNeighbor);
+        const pureWesternNeighbor = this.getMutableNeighbor("W");
+        pureWesternNeighbor?.setNeighbor("NE", northWesternNeighbor);
 
         // The new neighbor also needs to know about the hexes already in place.
         if (northWesternNeighbor != undefined) {
-            northWesternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("SouthEast")!]
-                = this;
-            northWesternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("PureEast")!]
-                = northEasternNeighbor;
-            northWesternNeighbor.nearestNeighbors[ImmutableHex.neighborIndex("SouthWest")!]
-                = pureWesternNeighbor;
+            northWesternNeighbor.setNeighbor("SE", this);
+            northWesternNeighbor.setNeighbor("E", northEasternNeighbor);
+            northWesternNeighbor.setNeighbor("SW", pureWesternNeighbor);
         }
     }
 
+    /**
+     * This checks to see if a a settlement at the specified corner and a road leading away from it
+     * in the specified direction is allowed, and if so, performs the placements and returns true
+     * and an empty string; otherwise no placement is performed and this returns false and an
+     * explanation. The neighbors which share the chosen corner are taken into account for the
+     * validation of the placement.
+     * This also invokes any given callback on a successful placement with the resource produced by
+     * this hex and with the resources produced by its neighbors which share this corner.
+     *
+     * @param settlementForPlacement The settlement piece to accept on the given corner
+     * @param settlementCorner The corner of this hex chosen for the settlement
+     * @param roadForPlacement The road piece to accept on the given edge
+     * @param roadEdge The edge of the hex chosen for the road
+     * @returns True with an empty string if the placement was performed, false and an explanation
+     *          otherwise
+     */
+    acceptInitialSettlementAndRoad(
+        settlementForPlacement: SettlementPiece,
+        settlementCorner: HexCornerDirection,
+        roadForPlacement: RoadPiece,
+        roadEdge: HexToHexDirection,
+        onPlacement?: HexCallback
+    ): [boolean, string] {
+        const validRoadEdgesForSettlement =
+            ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringCorner(settlementCorner);
+
+        if (!validRoadEdgesForSettlement.some(validEdge => validEdge == roadEdge)) {
+            return [false, `the ${roadEdge} edge does not lead to the ${settlementCorner} corner`];
+        }
+
+        if (this.hasRoad(roadEdge)) {
+            return [false, `the ${roadEdge} edge is already occupied by a road`];
+        }
+
+        const cornerSharers = this.getCornerSharing(settlementCorner);
+        if (MutableHex.haveOnlyEmptySharedCorners(cornerSharers)) {
+            return [false, `the ${settlementCorner} corner is too close to another settlement`];
+        }
+
+        // After it has been determined that both settlement and road have valid placements, the
+        // hex can accept the pieces. The neighbors will treat these pieces as their own when
+        // viewed from outside the class.
+        this.recordSettlementAndRegisterCallbacks(
+            settlementForPlacement,
+            settlementCorner,
+            cornerSharers.map(sharerWithCorner => sharerWithCorner[0])
+        );
+        this.acceptedRoads[ImmutableHex.edgeIndex(roadEdge)] = roadForPlacement;
+
+        if (onPlacement != undefined) {
+            for(const [sharingHex, _] of cornerSharers) {
+                if (sharingHex.producedResource != undefined) {
+                    onPlacement(sharingHex.producedResource)
+                }
+            }
+        }
+
+        return [true, ""];
+    }
+
+    /**
+     * This records a road at the specified edge if allowed, returning true and an empty string if
+     * the placement is valid, or false and an explanation if not. The neighbor which shares the
+     * chosen edge is taken into account for the validation of the placement.
+     *
+     * @param roadForPlacement The road piece to accept on the given edge
+     * @param placementEdge The edge of the hex chosen for the road
+     * @returns True with an empty string if the placement was performed, false and an explanation
+     *          otherwise
+     */
+    acceptRoad(roadForPlacement: RoadPiece, placementEdge: HexToHexDirection): [boolean, string] {
+        if (this.hasRoad(placementEdge)) {
+            return [false, `the ${placementEdge} edge is already occupied by a road`];
+        }
+
+        // The road leading to this edge which allows a road to be placed on it might only be on an
+        // edge of the neighboring hex.
+        if (
+            !this.getEdgeSharing(placementEdge).some(
+                sharerWithEdge =>
+                    sharerWithEdge[0].hasRoadForSamePlayerLeadingToEdge(
+                        roadForPlacement.owningPlayer,
+                        sharerWithEdge[1]
+                    )
+                )
+        ) {
+            return [false, "no neighboring edge with road owned by same player"];
+        }
+
+        this.acceptedRoads[ImmutableHex.edgeIndex(placementEdge)] = roadForPlacement;
+
+        return [true, ""];
+    }
+
+    /**
+     * This records a settlement at the specified corner if allowed, returning true and an empty
+     * string if the placement is valid, or false and an explanation if not. The neighbors which
+     * share the chosen corner are taken into account for the validation of the placement.
+     * It also invokes any given callback on a successful placement with the resource produced by
+     * this hex and with the resources produced by its neighbors which share this corner.
+     *
+     * @param placementCorner The corner of this hex chosen for the settlement
+     * @param onPlacement A callback to invoke if the placement is successful, using the resource
+     *                    produced by this hex and the resources produced by the neighbors which
+     *                    share the chosen corner
+     * @returns True with an empty string if the placement was performed, false and an explanation
+     *          otherwise
+     */
+    acceptSettlement(
+        settlementForPlacement: SettlementPiece,
+        placementCorner: HexCornerDirection,
+        onPlacement?: HexCallback
+    ): [boolean, string] {
+        if (
+            !ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringCorner(placementCorner).some(
+                hexEdge => this.hasRoadOwnedBySamePlayer(
+                    settlementForPlacement.owningPlayer,
+                    hexEdge
+                )
+            )
+        ) {
+            return [
+                false,
+                "no road owned by player leads to this corner"
+                + " (remember to place on a hex with the road)"
+            ];
+        }
+
+        const cornerSharers = this.getCornerSharing(placementCorner);
+        if (MutableHex.haveOnlyEmptySharedCorners(cornerSharers)) {
+            return [false, "too close to another settlement"];
+        }
+
+        if (
+            cornerSharers.some(
+                cornerSharer => cornerSharer[0].hasBothRoadsToCornerOwnedByAnotherPlayer(
+                    settlementForPlacement.owningPlayer,
+                    cornerSharer[1]
+                )
+            )
+        ) {
+            return [false, "cannot break the road of another player"];
+        }
+
+        this.recordSettlementAndRegisterCallbacks(
+            settlementForPlacement,
+            placementCorner,
+            cornerSharers.map(sharerWithCorner => sharerWithCorner[0])
+        );
+
+        return [true, ""];
+    }
+
+    hasRoad(roadEdge: HexToHexDirection): boolean {
+        // The edge betweeen two hexes is technically represented by two separate locations, which
+        // are considered to be the same place from the outside, but internally the edge on this
+        // hex has to be checked and also the corresponding edge on the other hex (if not
+        // undefined).
+        return this.getEdgeSharing(roadEdge).some(
+            sharerWithEdge => sharerWithEdge[0].hasAcceptedRoad(sharerWithEdge[1])
+        );
+    }
+
+    hasAcceptedRoad(roadEdge: HexToHexDirection): boolean {
+        return this.getAcceptedRoad(roadEdge) != undefined;
+    }
+
+    getPlayerOwningRoad(roadEdge: HexToHexDirection): AuthenticatedPlayer | undefined {
+        const acceptedOwner = this.getAcceptedRoad(roadEdge)?.owningPlayer;
+        if (acceptedOwner != undefined) {
+            return acceptedOwner;
+        }
+
+        // Otherwise we return the owner of the road accepted by the neighbor, if any.
+        return (
+            this.getMutableNeighbor(roadEdge)
+            ?.getAcceptedRoad(ImmutableHex.getOppositeEdge(roadEdge))
+            ?.owningPlayer
+        );
+    }
+
+    getPlayerOwningAcceptedRoad(roadEdge: HexToHexDirection): AuthenticatedPlayer | undefined {
+        return this.getAcceptedRoad(roadEdge)?.owningPlayer;
+    }
+
+    hasRoadForSamePlayerLeadingToEdge(
+        placingPlayer: AuthenticatedPlayer,
+        placementEdge: HexToHexDirection
+    ): boolean {
+        return ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringEdge(placementEdge).some(
+            neighboringEdge => this.hasRoadOwnedBySamePlayer(
+                placingPlayer,
+                neighboringEdge
+            )
+        );
+    }
+
+    hasRoadForSamePlayerLeadingToCorner(
+        placingPlayer: AuthenticatedPlayer,
+        placementCorner: HexCornerDirection
+    ): boolean {
+        return (
+            ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringCorner(placementCorner).some(
+                neighboringEdge => this.hasRoadOwnedBySamePlayer(placingPlayer, neighboringEdge)
+            )
+        );
+    }
+
+    hasBothRoadsToCornerOwnedByAnotherPlayer(
+        placingPlayer: AuthenticatedPlayer,
+        placementCorner: HexCornerDirection
+    ): boolean {
+        const roadOwners =
+            ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringCorner(placementCorner)
+            .map(edgeToCorner => this.getPlayerOwningRoad(edgeToCorner));
+        return (
+            (roadOwners.length == 2)
+            && (roadOwners[0] == roadOwners[1])
+            && (roadOwners[0] != placingPlayer)
+        );
+    }
+
+    isEmptyCornerWithEmptyBothSides(placementCorner: HexCornerDirection): boolean {
+        const placementIndex = ImmutableHex.cornerIndex(placementCorner);
+        const northwestIndex = this.acceptedSettlements.length - 1;
+        const clockwiseIndex = (placementIndex == 0) ? northwestIndex : placementIndex - 1;
+        const anticlockwiseIndex = (placementIndex == northwestIndex) ? 0 : placementIndex + 1;
+
+        return (
+            (this.acceptedSettlements[clockwiseIndex] == undefined)
+            && (this.acceptedSettlements[placementIndex] == undefined)
+            && (this.acceptedSettlements[anticlockwiseIndex] == undefined)
+        );
+    }
+
     abstract onProductionRoll(callbackFunction: HexCallback): void
+
+    protected static haveOnlyEmptySharedCorners(
+        cornerSharers: [MutableHex, HexCornerDirection][]
+    ): boolean {
+        return cornerSharers.some(
+                sharerWithCorner =>
+                    !sharerWithCorner[0].isEmptyCornerWithEmptyBothSides(sharerWithCorner[1])
+            );
+    }
 
     protected constructor(
         public readonly productionRollScore: ProductionRollScore | undefined,
@@ -159,9 +509,74 @@ export abstract class MutableHex extends ImmutableHex {
         super(productionRollScore, isOccupiedByRobber);
 
         this.nearestNeighbors = [undefined, undefined, undefined, undefined, undefined, undefined];
+        this.acceptedSettlements = [undefined, undefined, undefined, undefined, undefined, undefined];
+        this.acceptedRoads = [undefined, undefined, undefined, undefined, undefined, undefined];
     }
 
-    protected nearestNeighbors: (MutableHex | undefined)[]
+    protected getMutableNeighbor(neighborDirection: HexToHexDirection): MutableHex | undefined {
+        return this.nearestNeighbors[ImmutableHex.edgeIndex(neighborDirection)];
+    }
+
+    protected getAcceptedRoad(roadEdge: HexToHexDirection): RoadPiece | undefined {
+        return this.acceptedRoads[ImmutableHex.edgeIndex(roadEdge)];
+    }
+
+    protected hasRoadOwnedBySamePlayer(
+        placingPlayer: AuthenticatedPlayer,
+        roadEdge: HexToHexDirection
+    ): boolean {
+        return (this.getPlayerOwningRoad(roadEdge) == placingPlayer);
+    }
+
+    protected getEdgeSharing(hexEdge: HexToHexDirection): [MutableHex, HexToHexDirection][] {
+        const sharingNeighbor = this.getMutableNeighbor(hexEdge);
+
+        if (sharingNeighbor == undefined) {
+            return [[this, hexEdge]];
+        }
+
+        return [[this, hexEdge], [sharingNeighbor, ImmutableHex.getOppositeEdge(hexEdge)]];
+    }
+
+    protected getCornerSharing(
+        cornerDirection: HexCornerDirection
+    ): [MutableHex, HexCornerDirection][] {
+        let cornerSharers: [MutableHex, HexCornerDirection][] = [[this, cornerDirection]];
+
+        const sharingEdges =
+            ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringCorner(cornerDirection);
+
+        for (const sharingEdge of sharingEdges) {
+            const sharingNeighbor = this.getMutableNeighbor(sharingEdge);
+            if (sharingNeighbor != undefined) {
+                cornerSharers.push([
+                    sharingNeighbor,
+                    ImmutableHex.getCloserCornerNeighboringOppositeEdge(
+                        sharingEdge,
+                        cornerDirection
+                    )
+                ])
+            }
+        }
+
+        return cornerSharers;
+    }
+
+    protected recordSettlementAndRegisterCallbacks(
+        settlementForPlacement: SettlementPiece,
+        settlementCorner: HexCornerDirection,
+        cornerSharers: MutableHex[]
+    ): void {
+        this.acceptedSettlements[ImmutableHex.cornerIndex(settlementCorner)] =
+            settlementForPlacement;
+        for (const cornerSharer of cornerSharers) {
+            cornerSharer.onProductionRoll(settlementForPlacement.getHexProductionRollCallback());
+        }
+    }
+
+    protected nearestNeighbors: (MutableHex | undefined)[];
+    protected acceptedSettlements: (SettlementPiece | undefined)[];
+    protected acceptedRoads: (RoadPiece | undefined)[];
 }
 
 export abstract class MutableProductiveHex extends MutableHex {
@@ -341,14 +756,18 @@ export class HexBoard {
                         ? this.mutableHexes[verticalIndex]![horizontalIndex - 1]!
                         : undefined;
                     if (pureWesternNeighbor != undefined) {
-                        pureWesternNeighbor.setPureEasternNeighbor(hexBeingPlaced);
+                        pureWesternNeighbor.setPureEasternNeighborAndUpdateOtherNeighbors(
+                            hexBeingPlaced
+                        );
                     }
                     const southEasternNeighbor =
                         verticalIndex > 0
                         ? this.mutableHexes[verticalIndex - 1]![horizontalIndex]!
                         : undefined;
                     if (southEasternNeighbor != undefined) {
-                        southEasternNeighbor.setNorthWesternNeighbor(hexBeingPlaced);
+                        southEasternNeighbor.setNorthWesternNeighborAndUpdateOtherNeighbors(
+                            hexBeingPlaced
+                        );
                     }
                 }
             }

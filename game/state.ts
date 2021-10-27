@@ -1,10 +1,11 @@
-import { HexBoard, HexMatrix, ImmutableHex } from "./board/hex"
-import { AuthenticatedPlayer } from "./player/player"
+import { HexBoard, HexCornerDirection, HexMatrix, HexToHexDirection, ImmutableHex } from "./board/hex";
+import { RoadPiece, SettlementPiece } from "./board/piece";
+import { AuthenticatedPlayer } from "./player/player";
 
-export type GamePhase = "InitialPlacement" | "NormalTurns" | "Finished"
+export type GamePhase = "InitialPlacement" | "NormalTurns" | "Finished";
 export type PlayerNamesInTurnOrder = [string, string, string] | [string, string, string, string];
-export type RequestEffect = "RefusedSameTurn" | "SuccessfulSameTurn" | "SuccessfulNewTurn"
-export type RequestResult = [RequestEffect, string]
+export type RequestEffect = "RefusedSameTurn" | "SuccessfulSameTurn" | "SuccessfulNewTurn";
+export type RequestResult = [RequestEffect, string];
 
 export class Game {
     constructor(playerNamesInTurnOrder: PlayerNamesInTurnOrder, hexBoard: HexBoard) {
@@ -32,8 +33,8 @@ export class Game {
         requestingPlayerIdentifier: string,
         rowIndexFromOneInBoard: number,
         hexIndexFromOneInRow: number,
-        settlementCorner: string,
-        roadDirectionFromSettlement: string
+        settlementCorner: HexCornerDirection,
+        roadDirectionFromSettlement: HexCornerDirection
     ): RequestResult {
         return this.authenticateThenDelegate(
             requestingPlayerIdentifier,
@@ -184,8 +185,8 @@ class InInitialPlacement implements CanTakePlayerRequests {
         requestingPlayer: AuthenticatedPlayer,
         rowIndexFromOneInBoard: number,
         hexIndexFromOneInRow: number,
-        settlementCorner: string,
-        roadDirectionFromSettlement: string
+        settlementCorner: HexCornerDirection,
+        roadEdge: HexToHexDirection
     ): [CanTakePlayerRequests, RequestResult] {
         if (requestingPlayer != this.getActivePlayer()) {
             const refusalMessage =
@@ -209,6 +210,14 @@ class InInitialPlacement implements CanTakePlayerRequests {
                 + ` the range is 1 to ${this.internalState.hexBoard.changeBoard().length}`;
             return [this, ["RefusedSameTurn", refusalMessage]];
         }
+
+        const [isPlaced, refusalMessage] =
+            chosenHex.acceptInitialSettlementAndRoad(
+                new SettlementPiece(requestingPlayer, "village"),
+                settlementCorner,
+                new RoadPiece(requestingPlayer),
+                roadEdge
+            );
 
         if (!this.playersInPlacementOrder) {
             const nextRound = this.createNextRound(this.internalState);
