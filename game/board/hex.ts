@@ -145,14 +145,16 @@ export class HexBoard {
             PastureHex, PastureHex, PastureHex, PastureHex
         ];
         while (productionScoreTokensInAlphabeticalOrder.length) {
-            const scoreTokenIndex = Math.random() * productionScoreTokensInAlphabeticalOrder.length;
-            const extractedScore = productionScoreTokensInAlphabeticalOrder.splice(scoreTokenIndex, 1)[0]!;
-            const hexConstructorIndex = Math.random() * productionScoreTokensInAlphabeticalOrder.length;
+            const scoreTokenIndex =
+                Math.floor(Math.random() * productionScoreTokensInAlphabeticalOrder.length);
+            const extractedScore =
+                productionScoreTokensInAlphabeticalOrder.splice(scoreTokenIndex, 1)[0]!;
+            const hexConstructorIndex = Math.floor(Math.random() * hexConstructors.length);
             const extractedConstructor = hexConstructors.splice(hexConstructorIndex, 1)[0]!;
             hexTiles.push(new extractedConstructor(extractedScore));
         }
 
-        const desertIndex = Math.random() * productionScoreTokensInAlphabeticalOrder.length;
+        const desertIndex = Math.floor(Math.random() * hexTiles.length);
         hexTiles.splice(desertIndex, 0, new DesertHex());
 
         return new HexBoard(hexTiles);
