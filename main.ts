@@ -42,14 +42,11 @@ const consoleInterface =
         ["exit", "quit"]
     );
 
-// We display the board before the loop so that each iteration can show the changed state after the
-// command has been processed (and display information text beneath the board where it might be
-// noticed).
-consoleInterface.showBoard();
 while(exampleGame.getPhase() == "InitialPlacement") {
+    consoleInterface.showBoard();
+
     const rawPlayerRequest = consoleInterface.promptInitialPlacement();
 
-    consoleInterface.showBoard();
     console.log("########");
     console.log(`You entered: \"${rawPlayerRequest}\"`);
     console.log("########");

@@ -98,7 +98,7 @@ export class ConsoleInterface {
 
         // The northernmost two rows have dummy undefined hexes, so we start counting from the
         // first valid hex.
-        if (rowIndex == 3) {
+        if (rowIndex == 4) {
             if (hexWithinRow == "1") {
                 return [rowIndex, 2];
             }
@@ -109,7 +109,8 @@ export class ConsoleInterface {
                 return [rowIndex, 4];
             }
         }
-        if (rowIndex == 4) {
+
+        if (rowIndex == 3) {
             if (hexWithinRow == "1") {
                 return [rowIndex, 1];
             }

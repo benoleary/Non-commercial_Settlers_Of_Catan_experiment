@@ -4,15 +4,32 @@
  * working as intended.
  */
 
-import { HexMatrix, ImmutableHex, LandType } from "../game/board/hex"
+import { HexCornerDirection, HexToHexDirection, HexMatrix, ImmutableHex }
+    from "../game/board/hex"
 import { ProductionRollScore } from "../game/resource/resource";
-
-type CouldHaveEmoji = LandType | "robber";
 
 // There is an issue with whether my terminal (Debian 10.2) displays emoji as
 // single or double width. Hence some of these have spaces and others not.
 // It might look buggy on your machine.
-function emojiWideCharacterFor(inputType: CouldHaveEmoji): string {
+function emojiWideCharacterFor(inputType: string | undefined): string {
+    if (inputType == "p1") {
+        return "🛑";
+    }
+    if (inputType == "p2") {
+        return "🔵";
+    }
+    if (inputType == "p3") {
+        return "💚";
+    }
+    if (inputType == "p4") {
+        return "🔶";
+    }
+    if (inputType == "village") {
+        return "🏡";
+    }
+    if (inputType == "city") {
+        return "🏛️";
+    }
     if (inputType == "hills") {
         return "🧱";
     }
@@ -31,13 +48,31 @@ function emojiWideCharacterFor(inputType: CouldHaveEmoji): string {
     if (inputType == "desert") {
         return "🏜️ ";
     }
-    // The only case left is robber.
-    return "👺";
+    if (inputType == "robber") {
+        return "👺";
+    }
+
+    return "  ";
 }
 
-function asciiWideCharacterFor(inputType: CouldHaveEmoji): string {
-    if (inputType == "hills") {
-        return "hh";
+function asciiWideCharacterFor(inputType: string | undefined): string {
+    if (inputType == "p1") {
+        return "p1";
+    }
+    if (inputType == "p2") {
+        return "p2";
+    }
+    if (inputType == "p3") {
+        return "p3";
+    }
+    if (inputType == "p4") {
+        return "p4";
+    }
+    if (inputType == "village") {
+        return "VV";
+    }
+    if (inputType == "city") {
+        return "CC";
     }
     if (inputType == "forest") {
         return "tt";  // For "trees" to disambiguate from fields.
@@ -54,8 +89,11 @@ function asciiWideCharacterFor(inputType: CouldHaveEmoji): string {
     if (inputType == "desert") {
         return "DD";
     }
-    // The only case left is robber.
-    return " R";
+    if (inputType == "robber") {
+        return " R";
+    }
+
+    return "  ";
 }
 
 export class BoardVisualization {
@@ -64,14 +102,20 @@ export class BoardVisualization {
     }
 
     asString(hexBoard: HexMatrix<ImmutableHex>): string {
-        let returnString = "";
         // Reverse order because I read co-ordinates as vertical increasing from bottom to top.
-        for (let rowIndex = hexBoard.length - 1; rowIndex >= 0; rowIndex--) {
-            const offsetHalves = hexBoard.length - 1 - rowIndex;
-            returnString += this.rowAsString(offsetHalves, hexBoard[rowIndex]!);
-        }
-
-        return returnString;
+        return [
+            this.getNorthernEdge(hexBoard[4], 2),
+            this.getRowBody(hexBoard[4], 2, "E"),
+            this.getNorthernEdge(hexBoard[3], 1),
+            this.getRowBody(hexBoard[3], 1, "D"),
+            this.getNorthernEdge(hexBoard[2], 0),
+            this.getRowBody(hexBoard[2], 0, "C"),
+            this.getSouthernEdge(hexBoard[2], 0),
+            this.getRowBody(hexBoard[1], 1, "B"),
+            this.getSouthernEdge(hexBoard[1], 1),
+            this.getRowBody(hexBoard[0], 2, "A"),
+            this.getSouthernEdge(hexBoard[0], 2)
+        ].join("\n")
     }
 
     describeHex(hexToDescribe: ImmutableHex | undefined): string {
@@ -111,50 +155,154 @@ export class BoardVisualization {
         return returnString;
     }
 
-    private wideCharacterFor: (inputType: CouldHaveEmoji) => string
+    private wideCharacterFor: (inputType: string | undefined) => string
 
-    private rowAsString(offsetHexHalves: number, hexRow: (ImmutableHex | undefined)[]): string {
+    private static getOffsetText(offsetHexHalves: number, initialConstant: string): string {
+        return initialConstant + " ".repeat(8).repeat(offsetHexHalves + 1);
+    }
+
+    private getNorthernEdge(
+        hexRow: (ImmutableHex | undefined)[],
+        offsetHexHalves: number
+    ): string {
         const textHexes: TextHex[] =
-            hexRow.map(
-                gameHex => gameHex ? new LandHex(this.wideCharacterFor, gameHex) : new EmptyHex()
-            );
+            hexRow
+            .filter(gameHex => gameHex != undefined)
+            .map(gameHex => new TextHex(this.wideCharacterFor, gameHex!));
 
-        let rowAsString = "\n";
-        const offsetString = "   ".repeat(offsetHexHalves);
-        for (let textIndex = 0; textIndex < 4; textIndex++) {
-            rowAsString +=
-                offsetString
-                + textHexes.map(textHex =>textHex.textLines[textIndex]).join("  ")
-                + "\n";
+        return (
+            BoardVisualization.getOffsetText(offsetHexHalves, " ")
+            + textHexes.map(textHex => textHex.northernEdgeWithWest).join("")
+            + textHexes[textHexes.length - 1]!!.northEasternCorner
+            + "\n"
+        );
+    }
+
+    private getRowBody(
+        hexRow: (ImmutableHex | undefined)[],
+        offsetHexHalves: number,
+        initialConstant: string
+    ): string {
+        const textHexes: TextHex[] =
+            hexRow
+            .filter(gameHex => gameHex != undefined)
+            .map(gameHex => new TextHex(this.wideCharacterFor, gameHex!));
+
+        let rowAsString = "";
+        const offsetString = BoardVisualization.getOffsetText(offsetHexHalves, initialConstant);
+        for (let textIndex = 0; textIndex < textHexes[0]!.bodyWithWest.length; textIndex++) {
+            const lastHexIndex = textHexes.length - 1;
+
+            rowAsString += offsetString
+            for (let hexIndex = 0; hexIndex <= lastHexIndex; hexIndex++) {
+                rowAsString += textHexes[hexIndex]!.bodyWithWest[textIndex]!;
+            }
+
+            rowAsString += textHexes[lastHexIndex]!.easternEdge[textIndex]! + "\n";
         }
 
-        return rowAsString + "\n";
+        return rowAsString;
+    }
+
+    private getSouthernEdge(
+        hexRow: (ImmutableHex | undefined)[],
+        offsetHexHalves: number
+    ): string {
+        const textHexes: TextHex[] =
+            hexRow
+            .filter(gameHex => gameHex != undefined)
+            .map(gameHex => new TextHex(this.wideCharacterFor, gameHex!));
+
+        return (
+            BoardVisualization.getOffsetText(offsetHexHalves, " ")
+            + textHexes.map(textHex => textHex.southernEdgeWithWest).join("")
+            + textHexes[textHexes.length - 1]!!.southEasternCorner
+            + "\n"
+        );
     }
 }
+
+type TextBody = [string, string, string, string];
 
 class TextHex {
-    protected constructor(public readonly textLines: [string, string, string, string]) { }
-}
+    public readonly northernEdgeWithWest: string;
+    public readonly bodyWithWest: TextBody;
+    public readonly southernEdgeWithWest: string;
+    public readonly easternEdge: TextBody;
+    public readonly northEasternCorner: string;
+    public readonly southEasternCorner: string;
 
-class EmptyHex extends TextHex {
-    constructor() {
-        const fourspaces = "    ";
-        super([fourspaces, fourspaces, fourspaces, fourspaces]);
-    }
-}
-
-class LandHex extends TextHex {
-    constructor(wideCharacterFor: (inputType: CouldHaveEmoji) => string, gameHex: ImmutableHex) {
+    constructor(
+        wideCharacterFor: (inputType: string | undefined) => string,
+        gameHex: ImmutableHex
+    ) {
         const landWideCharacter = wideCharacterFor(gameHex.landType);
         const robberWideCharacter = gameHex.hasRobber ? wideCharacterFor("robber") : "  ";
-        const longSide = landWideCharacter + landWideCharacter + landWideCharacter;
-        const productionScoreText = LandHex.rollScoreString(gameHex.productionRollScore);
-        super([
-            longSide,
-            landWideCharacter + robberWideCharacter + landWideCharacter,
-            landWideCharacter + productionScoreText + landWideCharacter,
-            longSide
-        ]);
+        const shortSideWall = landWideCharacter.repeat(2)
+        const longSide = landWideCharacter.repeat(6);
+        const productionScoreText = TextHex.rollScoreString(gameHex.productionRollScore);
+
+        const [
+            northEasternRoad,
+            pureEasternRoad,
+            southEasternRoad,
+            southWesternRoad,
+            pureWesternRoad,
+            northWesternRoad
+        ] = TextHex.validHexToHexDirections.map(
+            roadEdge => wideCharacterFor(gameHex.getRoadOwner(roadEdge)?.playerName)
+        );
+
+        const [
+            pureNorthernSettlement,
+            northEasternSettlement,
+            southEasternSettlement,
+            pureSouthernSettlement,
+            southWesternSettlement,
+            northWesternSettlement
+        ] = TextHex.validCornerDirections.map(
+            settlementCorner => {
+                const ownerAndType = gameHex.getSettlementOwnerAndType(settlementCorner);
+                if (ownerAndType == undefined) {
+                    return " ".repeat(4);
+                }
+
+                return ownerAndType[0].playerName + wideCharacterFor(ownerAndType[1]);
+            }
+        );
+
+
+        this.northernEdgeWithWest = (
+            northWesternSettlement!
+            + northWesternRoad!.repeat(2)
+            + pureNorthernSettlement
+            + northEasternRoad!.repeat(2)
+        );
+        this.northEasternCorner = northEasternSettlement!;
+
+        const spacedWesternRoad = " " + pureWesternRoad + " "
+        this.bodyWithWest = [
+            spacedWesternRoad + longSide,
+            spacedWesternRoad + shortSideWall + " " + robberWideCharacter + " " + shortSideWall,
+            spacedWesternRoad + shortSideWall + " " + productionScoreText + " " + shortSideWall,
+            spacedWesternRoad + longSide
+        ];
+
+        const spacedEasternRoad = " " + pureEasternRoad + " "
+        this.easternEdge = [
+            spacedEasternRoad,
+            spacedEasternRoad,
+            spacedEasternRoad,
+            spacedEasternRoad
+        ];
+
+        this.southernEdgeWithWest = (
+            southWesternSettlement!
+            + southWesternRoad!.repeat(2)
+            + pureSouthernSettlement
+            + southEasternRoad!.repeat(2)
+        );
+        this.southEasternCorner = southEasternSettlement!;
     }
 
     // Even though tsconfig.json specifies ec2020, the compiler refuses to recognize padStart.
@@ -162,10 +310,16 @@ class LandHex extends TextHex {
         if (productionRollScore == undefined) {
             return "--";
         }
+
         if (productionRollScore < 10n) {
             return " " + productionRollScore.toString()
         }
 
         return productionRollScore.toString()
     }
+
+    private static readonly validCornerDirections: HexCornerDirection[] =
+        ["N", "NE", "SE", "S", "SW", "NW"];
+    private static readonly validHexToHexDirections: HexToHexDirection[] =
+        ["NE", "E", "SE", "SW", "W", "NW"];
 }

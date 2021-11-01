@@ -1,7 +1,7 @@
 import { AuthenticatedPlayer } from "../player/player"
 import { ResourceType } from "../resource/resource";
 
-type SettlementType = "village" | "city";
+export type SettlementType = "village" | "city";
 
 export class RoadPiece {
     constructor(public readonly owningPlayer: AuthenticatedPlayer) { }
@@ -12,6 +12,10 @@ export class SettlementPiece {
         public readonly owningPlayer: AuthenticatedPlayer,
         private settlementType: SettlementType
     ) { }
+
+    getType() {
+        return this.settlementType;
+    }
 
     getHexProductionRollCallback(): (producedResource: ResourceType) => void {
         return this.propagateResourceToPlayer.bind(this);

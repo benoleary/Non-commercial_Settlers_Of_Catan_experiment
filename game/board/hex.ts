@@ -1,6 +1,7 @@
+import { errorMonitor } from "events";
 import { AuthenticatedPlayer } from "../player/player";
 import { ProductionRollScore, ResourceType } from "../resource/resource";
-import { RoadPiece, SettlementPiece } from "./piece";
+import { RoadPiece, SettlementPiece, SettlementType } from "./piece";
 
 type ProductiveType = "hills" | "forest" | "mountains" | "fields" | "pasture";
 export type LandType = ProductiveType | "desert";
@@ -19,6 +20,12 @@ export abstract class ImmutableHex {
     get hasRobber(): boolean {
         return this.isOccupiedByRobber;
     }
+
+    abstract getRoadOwner(roadEdge: HexToHexDirection): AuthenticatedPlayer | undefined
+
+    abstract getSettlementOwnerAndType(
+        settlementCorner: HexCornerDirection
+    ): [AuthenticatedPlayer, SettlementType] | undefined
 
     /**
      * This should return the neighbor of this hex in the given direction.
@@ -191,6 +198,36 @@ type HexCallback = (producedResource: ResourceType) => void;
 export abstract class MutableHex extends ImmutableHex {
     viewNeighbor(neighborDirection: HexToHexDirection): ImmutableHex | undefined {
         return this.getMutableNeighbor(neighborDirection);
+    }
+
+    getRoadOwner(roadEdge: HexToHexDirection): AuthenticatedPlayer | undefined {
+        return this.getPlayerOwningRoad(roadEdge);
+    }
+
+    getSettlementOwnerAndType(
+        settlementCorner: HexCornerDirection
+    ): [AuthenticatedPlayer, SettlementType] | undefined {
+        const cornerSharers = this.getCornerSharing(settlementCorner);
+        const acceptedSettlementsOnCorner =
+            cornerSharers.map(
+                cornerSharer => cornerSharer[0].getAcceptedSettlement(cornerSharer[1])
+            )
+            .filter(acceptedSettlement => acceptedSettlement != undefined);
+
+        if (acceptedSettlementsOnCorner.length > 1) {
+            throw new Error(
+                `Somehow multiple hexes own a settlement on this hex's ${settlementCorner} corner`
+            );
+        }
+
+        if (acceptedSettlementsOnCorner.length < 1) {
+            return undefined;
+        }
+
+        // Silly TypeScript, we have already filtered out all elements which are undefined.
+        const acceptedSettlement = acceptedSettlementsOnCorner[0]!;
+
+        return [acceptedSettlement.owningPlayer, acceptedSettlement.getType()];
     }
 
     setNeighbor(
@@ -526,6 +563,12 @@ export abstract class MutableHex extends ImmutableHex {
         roadEdge: HexToHexDirection
     ): boolean {
         return (this.getPlayerOwningRoad(roadEdge) == placingPlayer);
+    }
+
+    protected getAcceptedSettlement(
+        settlementCorner: HexCornerDirection
+    ): SettlementPiece | undefined {
+        return this.acceptedSettlements[ImmutableHex.cornerIndex(settlementCorner)];
     }
 
     protected getEdgeSharing(hexEdge: HexToHexDirection): [MutableHex, HexToHexDirection][] {

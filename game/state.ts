@@ -31,8 +31,8 @@ export class Game {
 
     placeInitialSettlement(
         requestingPlayerIdentifier: string,
-        rowIndexFromOneInBoard: number,
-        hexIndexFromOneInRow: number,
+        rowIndexFromZeroInBoard: number,
+        hexIndexFromZeroInRow: number,
         settlementCorner: HexCornerDirection,
         roadEdge: HexToHexDirection
     ): RequestResult {
@@ -41,8 +41,8 @@ export class Game {
             (requestingPlayer: AuthenticatedPlayer) =>
                 this.internalState.placeInitialSettlement(
                     requestingPlayer,
-                    rowIndexFromOneInBoard,
-                    hexIndexFromOneInRow,
+                    rowIndexFromZeroInBoard,
+                    hexIndexFromZeroInRow,
                     settlementCorner,
                     roadEdge
                 )
@@ -76,8 +76,8 @@ interface CanTakePlayerRequests {
 
     placeInitialSettlement(
         requestingPlayerIdentifier: AuthenticatedPlayer,
-        rowIndexFromOneInBoard: number,
-        hexIndexFromOneInRow: number,
+        rowIndexFromZeroInBoard: number,
+        hexIndexFromZeroInRow: number,
         settlementCorner: HexCornerDirection,
         roadEdge: HexToHexDirection
     ): [CanTakePlayerRequests, RequestResult]
@@ -134,8 +134,8 @@ class InNormalTurns implements CanTakePlayerRequests {
 
     placeInitialSettlement(
         requestingPlayer: AuthenticatedPlayer,
-        rowIndexFromOneInBoard: number,
-        hexIndexFromOneInRow: number,
+        rowIndexFromZeroInBoard: number,
+        hexIndexFromZeroInRow: number,
         settlementCorner: HexCornerDirection,
         roadEdge: HexToHexDirection
     ): [CanTakePlayerRequests, RequestResult] {
@@ -183,8 +183,8 @@ class InInitialPlacement implements CanTakePlayerRequests {
 
     placeInitialSettlement(
         requestingPlayer: AuthenticatedPlayer,
-        rowIndexFromOneInBoard: number,
-        hexIndexFromOneInRow: number,
+        rowIndexFromZeroInBoard: number,
+        hexIndexFromZeroInRow: number,
         settlementCorner: HexCornerDirection,
         roadEdge: HexToHexDirection
     ): [CanTakePlayerRequests, RequestResult] {
@@ -195,18 +195,18 @@ class InInitialPlacement implements CanTakePlayerRequests {
             return [this, ["RefusedSameTurn", refusalMessage]];
         }
 
-        const chosenRow = this.internalState.hexBoard.changeBoard()[rowIndexFromOneInBoard - 1];
+        const chosenRow = this.internalState.hexBoard.changeBoard()[rowIndexFromZeroInBoard];
         if (chosenRow == undefined) {
             const refusalMessage =
-                `Row ${rowIndexFromOneInBoard} is not a valid row,`
+                `Row ${rowIndexFromZeroInBoard} is not a valid row,`
                 + ` the range is 1 to ${this.internalState.hexBoard.changeBoard().length}`;
             return [this, ["RefusedSameTurn", refusalMessage]];
         }
 
-        const chosenHex = chosenRow[hexIndexFromOneInRow - 1];
+        const chosenHex = chosenRow[hexIndexFromZeroInRow];
         if (chosenHex == undefined) {
             const refusalMessage =
-                `Hex ${hexIndexFromOneInRow} is not a valid hex,`
+                `Hex ${hexIndexFromZeroInRow} is not a valid hex,`
                 + ` the range is 1 to ${this.internalState.hexBoard.changeBoard().length}`;
             return [this, ["RefusedSameTurn", refusalMessage]];
         }
