@@ -34,7 +34,7 @@ export class Game {
         rowIndexFromOneInBoard: number,
         hexIndexFromOneInRow: number,
         settlementCorner: HexCornerDirection,
-        roadDirectionFromSettlement: HexCornerDirection
+        roadEdge: HexToHexDirection
     ): RequestResult {
         return this.authenticateThenDelegate(
             requestingPlayerIdentifier,
@@ -44,7 +44,7 @@ export class Game {
                     rowIndexFromOneInBoard,
                     hexIndexFromOneInRow,
                     settlementCorner,
-                    roadDirectionFromSettlement
+                    roadEdge
                 )
         );
     }
@@ -78,8 +78,8 @@ interface CanTakePlayerRequests {
         requestingPlayerIdentifier: AuthenticatedPlayer,
         rowIndexFromOneInBoard: number,
         hexIndexFromOneInRow: number,
-        settlementCorner: string,
-        roadDirectionFromSettlement: string
+        settlementCorner: HexCornerDirection,
+        roadEdge: HexToHexDirection
     ): [CanTakePlayerRequests, RequestResult]
 }
 
@@ -136,8 +136,8 @@ class InNormalTurns implements CanTakePlayerRequests {
         requestingPlayer: AuthenticatedPlayer,
         rowIndexFromOneInBoard: number,
         hexIndexFromOneInRow: number,
-        settlementCorner: string,
-        roadDirectionFromSettlement: string
+        settlementCorner: HexCornerDirection,
+        roadEdge: HexToHexDirection
     ): [CanTakePlayerRequests, RequestResult] {
         return [this, ["RefusedSameTurn", "initial settlement placement phase is over"]];
     }
@@ -219,12 +219,16 @@ class InInitialPlacement implements CanTakePlayerRequests {
                 roadEdge
             );
 
-        if (!this.playersInPlacementOrder) {
-            const nextRound = this.createNextRound(this.internalState);
-            return [nextRound, ["RefusedSameTurn", "not yet fully implemented"]];
+        if (!isPlaced) {
+            return [this, ["RefusedSameTurn", refusalMessage]];
         }
 
-        return [this, ["RefusedSameTurn", "not yet fully implemented"]];
+        if (this.playersInPlacementOrder) {
+            return [this, ["SuccessfulSameTurn", ""]];
+        }
+
+        const nextRound = this.createNextRound(this.internalState);
+        return [nextRound, ["SuccessfulNewTurn", ""]];
     }
 
     private constructor(

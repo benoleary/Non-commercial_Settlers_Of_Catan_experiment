@@ -81,14 +81,31 @@ while(exampleGame.getPhase() == "InitialPlacement") {
         continue;
     }
 
-    // TODO: parsedRequest[2] to HexCornerDirection and parsedRequest[3] to HexToHexDirection.
+    const settlementCorner = consoleInterface.convertToHexCorner(parsedRequest[2]!);
+    if (settlementCorner == undefined) {
+        console.log(
+            `Could not understand ${parsedRequest[2]} as a valid corner of the chosen hex`
+        );
+        console.log("########");
+        continue;
+    }
+
+    const roadEdge = consoleInterface.convertToHexToHex(parsedRequest[3]!);
+    if (roadEdge == undefined) {
+        console.log(
+            `Could not understand ${parsedRequest[3]} as a valid edge of the chosen hex`
+        );
+        console.log("########");
+        continue;
+    }
+
     const requestResult =
         exampleGame.placeInitialSettlement(
             parsedPlayerIdentifier,
             rowIndexInBoardFromZero,
             hexIndexInRowFromZero,
-            parsedRequest[2]!,
-            parsedRequest[3]!
+            settlementCorner,
+            roadEdge
         );
 
     console.log(`Request status: ${requestResult}`);
