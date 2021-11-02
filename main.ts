@@ -1,6 +1,6 @@
 import { HexBoard } from "./game/board/hex"
 import { Game } from "./game/state"
-import { BoardVisualization } from "./visualization/visualization"
+import { BoardVisualization, PlayerVisualization } from "./visualization/visualization"
 import { ConsoleInterface } from "./interaction/console"
 import promptSync from 'prompt-sync';
 
@@ -23,7 +23,9 @@ if (["-h", "-help", "--help"].some(helpArgument => process.argv.includes(helpArg
 
 const playerNamesInTurnOrder: [string, string, string, string] = ["p1", "p2", "p3", "p4"];
 let exampleGame = new Game(playerNamesInTurnOrder, HexBoard.getFullyRandomBoard());
-let boardVisualization = new BoardVisualization(process.argv.includes(emojiArgument));
+const hasEmojiArgument = process.argv.includes(emojiArgument)
+let playerVisualization = new PlayerVisualization(hasEmojiArgument);
+let boardVisualization = new BoardVisualization(hasEmojiArgument);
 
 
 if (process.argv.includes(neighborDebuggingArgument)) {
@@ -44,6 +46,10 @@ const consoleInterface =
 
 while(exampleGame.getPhase() == "InitialPlacement") {
     consoleInterface.showBoard();
+
+    for (const playerName of playerNamesInTurnOrder) {
+        console.log(playerVisualization.asString(exampleGame.getPlayer(playerName)!));
+    }
 
     const rawPlayerRequest = consoleInterface.promptInitialPlacement();
 

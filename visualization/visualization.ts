@@ -6,6 +6,7 @@
 
 import { HexCornerDirection, HexToHexDirection, HexMatrix, ImmutableHex }
     from "../game/board/hex"
+import { AuthenticatedPlayer } from "../game/player/player";
 import { ProductionRollScore } from "../game/resource/resource";
 
 // There is an issue with whether my terminal (Debian 10.2) displays emoji as
@@ -47,6 +48,21 @@ function emojiWideCharacterFor(inputType: string | undefined): string {
     }
     if (inputType == "desert") {
         return "🏜️ ";
+    }
+    if (inputType == "brick") {
+        return "🧱";
+    }
+    if (inputType == "lumber") {
+        return "🌲";
+    }
+    if (inputType == "ore") {
+        return "⛰️ ";
+    }
+    if (inputType == "grain") {
+        return "🌾";
+    }
+    if (inputType == "wool") {
+        return "🐑";
     }
     if (inputType == "robber") {
         return "👺";
@@ -92,6 +108,21 @@ function asciiWideCharacterFor(inputType: string | undefined): string {
     if (inputType == "desert") {
         return "DD";
     }
+    if (inputType == "brick") {
+        return " B";
+    }
+    if (inputType == "lumber") {
+        return " L";
+    }
+    if (inputType == "ore") {
+        return " O";
+    }
+    if (inputType == "grain") {
+        return " G";
+    }
+    if (inputType == "wool") {
+        return " W";
+    }
     if (inputType == "robber") {
         return " R";
     }
@@ -99,9 +130,33 @@ function asciiWideCharacterFor(inputType: string | undefined): string {
     return "  ";
 }
 
-export class BoardVisualization {
+export class VisualizationUsingWideCharacters {
     constructor(useEmoji: boolean) {
         this.wideCharacterFor = useEmoji ? emojiWideCharacterFor : asciiWideCharacterFor;
+    }
+
+    protected wideCharacterFor: (inputType: string | undefined) => string
+}
+
+export class PlayerVisualization extends VisualizationUsingWideCharacters {
+    constructor(useEmoji: boolean) {
+        super(useEmoji);
+    }
+
+    asString(displayedPlayer: AuthenticatedPlayer): string {
+        const playerHand =
+            displayedPlayer
+            .getResourceArray()
+            .map(resourceCard => this.wideCharacterFor(resourceCard))
+            .join(" ");
+        const playerName = displayedPlayer.playerName
+        return `${playerName}${this.wideCharacterFor(playerName)}: ${playerHand}`;
+    }
+}
+
+export class BoardVisualization extends VisualizationUsingWideCharacters {
+    constructor(useEmoji: boolean) {
+        super(useEmoji);
     }
 
     asString(hexBoard: HexMatrix<ImmutableHex>): string {
@@ -157,8 +212,6 @@ export class BoardVisualization {
 
         return returnString;
     }
-
-    private wideCharacterFor: (inputType: string | undefined) => string
 
     private static getOffsetText(offsetHexHalves: number, initialConstant: string): string {
         return initialConstant + " ".repeat(8).repeat(offsetHexHalves + 1);

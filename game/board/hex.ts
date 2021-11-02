@@ -314,7 +314,7 @@ export abstract class MutableHex extends ImmutableHex {
         settlementCorner: HexCornerDirection,
         roadForPlacement: RoadPiece,
         roadEdge: HexToHexDirection,
-        onPlacement?: HexCallback
+        onPlacement: HexCallback | undefined
     ): [boolean, string] {
         const validRoadEdgesForSettlement =
             ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringCorner(settlementCorner);

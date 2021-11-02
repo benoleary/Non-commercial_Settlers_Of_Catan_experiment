@@ -1,5 +1,6 @@
 import { HexBoard, HexCornerDirection, HexMatrix, HexToHexDirection, ImmutableHex } from "./board/hex";
 import { RoadPiece, SettlementPiece } from "./board/piece";
+import { ResourceType } from "./resource/resource";
 import { AuthenticatedPlayer } from "./player/player";
 
 export type GamePhase = "InitialPlacement" | "NormalTurns" | "Finished";
@@ -162,11 +163,13 @@ class InInitialPlacement implements CanTakePlayerRequests {
         return new InInitialPlacement(
             initialState,
             initialState.playersInTurnOrder.slice(),
+            false,
             // The next round needs basically the same thing but in reverse order, but also with
             // the allocation of resources occuring with the second placement.
             (internalState: InternalState) => new InInitialPlacement(
                 internalState,
                 internalState.playersInTurnOrder.slice().reverse(),
+                true,
                 // After the second round of initial placements, we move into normal turns.
                 InNormalTurns.createInNormalTurns
             )
@@ -211,12 +214,18 @@ class InInitialPlacement implements CanTakePlayerRequests {
             return [this, ["RefusedSameTurn", refusalMessage]];
         }
 
+        const giveResourceFromHexToPlayer =
+            this.isSecondRound
+            ? (hexResource: ResourceType) => requestingPlayer.acceptResource(hexResource, 1n)
+            : undefined;
+
         const [isPlaced, refusalMessage] =
             chosenHex.acceptInitialSettlementAndRoad(
                 new SettlementPiece(requestingPlayer, "village"),
                 settlementCorner,
                 new RoadPiece(requestingPlayer),
-                roadEdge
+                roadEdge,
+                giveResourceFromHexToPlayer
             );
 
         if (!isPlaced) {
@@ -237,6 +246,7 @@ class InInitialPlacement implements CanTakePlayerRequests {
     private constructor(
         private internalState: InternalState,
         private playersInPlacementOrder: AuthenticatedPlayer[],
+        private isSecondRound: boolean,
         private createNextRound: (internalState: InternalState) => CanTakePlayerRequests
     ) { }
 }
