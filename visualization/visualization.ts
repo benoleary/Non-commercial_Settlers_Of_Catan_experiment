@@ -176,43 +176,6 @@ export class BoardVisualization extends VisualizationUsingWideCharacters {
         ].join("\n")
     }
 
-    describeHex(hexToDescribe: ImmutableHex | undefined): string {
-        if (hexToDescribe == undefined) {
-            return "(empty)"
-        }
-
-        const numberText = hexToDescribe.productionRollScore ?? "(none)";
-        return `${this.wideCharacterFor(hexToDescribe.landType)} ${numberText}`;
-    }
-
-    describeNeighbors(hexToDescribe: ImmutableHex | undefined): string {
-        if (hexToDescribe == undefined) {
-            return "(empty, no knowledge of neighbors)";
-        }
-
-        return (
-            `selected: [${this.describeHex(hexToDescribe)}]`
-            + `  NE: [${this.describeHex(hexToDescribe.viewNeighbor("NE"))}]`
-            + `  E:  [${this.describeHex(hexToDescribe.viewNeighbor("E"))}]`
-            + `  SE: [${this.describeHex(hexToDescribe.viewNeighbor("SE"))}]`
-            + `  SW: [${this.describeHex(hexToDescribe.viewNeighbor("SW"))}]`
-            + `  W:  [${this.describeHex(hexToDescribe.viewNeighbor("W"))}]`
-            + `  NW: [${this.describeHex(hexToDescribe.viewNeighbor("NW"))}]`
-        );
-    }
-
-    describeAllNeighborSets(hexBoard: HexMatrix<ImmutableHex>): string {
-        let returnString = "";
-        for (let indexOfRow = 0; indexOfRow < hexBoard.length; indexOfRow++) {
-            for (let indexInRow = 0; indexInRow < hexBoard[indexOfRow]!.length; indexInRow++) {
-                returnString +=
-                this.describeNeighbors(hexBoard[indexOfRow]![indexInRow]) + "\n";
-            }
-        }
-
-        return returnString;
-    }
-
     private static getOffsetText(offsetHexHalves: number, initialConstant: string): string {
         return initialConstant + " ".repeat(8).repeat(offsetHexHalves + 1);
     }
