@@ -223,7 +223,10 @@ class InInitialPlacement implements CanTakePlayerRequests {
             return [this, ["RefusedSameTurn", refusalMessage]];
         }
 
-        if (this.playersInPlacementOrder) {
+        // Now the next player gets to place a settlement, or we move to the second round.
+        this.playersInPlacementOrder.splice(0, 1);
+
+        if (this.playersInPlacementOrder.length > 0) {
             return [this, ["SuccessfulSameTurn", ""]];
         }
 

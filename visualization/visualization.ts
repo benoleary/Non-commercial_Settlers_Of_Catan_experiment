@@ -74,6 +74,9 @@ function asciiWideCharacterFor(inputType: string | undefined): string {
     if (inputType == "city") {
         return "CC";
     }
+    if (inputType == "hills") {
+        return "hh";
+    }
     if (inputType == "forest") {
         return "tt";  // For "trees" to disambiguate from fields.
     }
