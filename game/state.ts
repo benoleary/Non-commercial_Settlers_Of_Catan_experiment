@@ -156,6 +156,7 @@ class InNormalTurns implements CanTakePlayerRequests {
     }
 
     private constructor(private internalState: InternalState) {
+        this.internalState.gamePhase = "NormalTurns";
         this.numberOfPlayers = this.internalState.playersInTurnOrder.length;
         this.activePlayerIndex = 0;
         this.beginTurn();
