@@ -129,8 +129,7 @@ class InNormalTurns implements CanTakePlayerRequests {
     }
 
     getActivePlayer(): AuthenticatedPlayer | undefined {
-        // TODO: implement this.
-        return undefined;
+        return this.internalState.playersInTurnOrder[this.activePlayerIndex];
     }
 
     placeInitialSettlement(
@@ -143,7 +142,31 @@ class InNormalTurns implements CanTakePlayerRequests {
         return [this, ["RefusedSameTurn", "initial settlement placement phase is over"]];
     }
 
-    private constructor(private internalState: InternalState) { }
+    endTurn(requestingPlayer: AuthenticatedPlayer): [CanTakePlayerRequests, RequestResult] {
+        if (requestingPlayer != this.getActivePlayer()) {
+            const refusalMessage =
+                `${requestingPlayer.playerName} is not the active player,`
+                + ` ${this.getActivePlayer()?.playerName} is`;
+            return [this, ["RefusedSameTurn", refusalMessage]];
+        }
+
+        this.activePlayerIndex = (this.activePlayerIndex + 1) % this.numberOfPlayers;
+        this.beginTurn();
+        return [this, ["SuccessfulNewTurn", ""]];
+    }
+
+    private constructor(private internalState: InternalState) {
+        this.numberOfPlayers = this.internalState.playersInTurnOrder.length;
+        this.activePlayerIndex = 0;
+        this.beginTurn();
+    }
+
+    private beginTurn(): void {
+        // This should roll the dice.
+    }
+
+    private readonly numberOfPlayers: number;
+    private activePlayerIndex: number;
 }
 
 class InInitialPlacement implements CanTakePlayerRequests {
