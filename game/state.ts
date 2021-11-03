@@ -1,14 +1,20 @@
-import { HexBoard, HexCornerDirection, HexMatrix, HexToHexDirection, ImmutableHex } from "./board/hex";
+import { HexBoard, HexCornerDirection, HexMatrix, HexToHexDirection, ImmutableHex }
+    from "./board/hex";
 import { AuthenticatedPlayer } from "./player/player";
-import { CanTakePlayerRequests, GamePhase, PlayerNamesInTurnOrder, RequestResult } from "./state/interface";
+import { CanTakePlayerRequests, GamePhase, PlayerNamesInTurnOrder, RequestResult }
+    from "./state/interface";
 import { InInitialPlacement } from "./state/InInitialPlacement";
 
+export { PlayerNamesInTurnOrder }
 
 export class Game {
-    constructor(playerNamesInTurnOrder: PlayerNamesInTurnOrder, hexBoard: HexBoard) {
+    constructor(
+        public readonly playerNamesInTurnOrder: PlayerNamesInTurnOrder,
+        hexBoard: HexBoard
+    ) {
         this.internalState =
             InInitialPlacement.createInInitialPlacement(playerNamesInTurnOrder, hexBoard);
-     }
+    }
 
     viewBoard(): HexMatrix<ImmutableHex> {
         return this.internalState.getReadableState().viewBoard();
