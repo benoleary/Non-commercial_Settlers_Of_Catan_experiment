@@ -3,6 +3,10 @@ import { AuthenticatedPlayer } from "../player/player";
 import { GamePhase, ReadableState } from "./interface";
 
 export class InternalState implements ReadableState {
+    playersByName: {
+        [playerName: string]: AuthenticatedPlayer
+    }
+
     viewBoard(): HexMatrix<ImmutableHex> {
         return this.hexBoard.viewBoard();
     }
@@ -24,9 +28,5 @@ export class InternalState implements ReadableState {
         for (const playerInTurnOrder of this.playersInTurnOrder) {
             this.playersByName[playerInTurnOrder.playerName] = playerInTurnOrder;
         }
-    }
-
-    playersByName: {
-        [playerName: string]: AuthenticatedPlayer
     }
 }

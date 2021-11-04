@@ -26,7 +26,10 @@ export class InNormalTurns implements CanTakePlayerRequests {
         return [this, ["RefusedSameTurn", "initial settlement placement phase is over"]];
     }
 
-    endTurn(requestingPlayer: AuthenticatedPlayer): [CanTakePlayerRequests, RequestResult] {
+
+    beginNextNormalTurn(
+        requestingPlayer: AuthenticatedPlayer
+    ): [CanTakePlayerRequests, RequestResult] {
         if (requestingPlayer != this.getActivePlayer()) {
             const refusalMessage =
                 `${requestingPlayer.playerName} is not the active player,`
@@ -36,7 +39,14 @@ export class InNormalTurns implements CanTakePlayerRequests {
 
         this.activePlayerIndex = (this.activePlayerIndex + 1) % this.numberOfPlayers;
         this.beginTurn();
-        return [this, ["SuccessfulNewTurn", ""]];
+        return [
+            this,
+            [
+                "SuccessfulNewTurn",
+                `Player ${requestingPlayer.playerName} passed turn`
+                + ` to player ${this.getActivePlayer()?.playerName}`
+            ]
+        ];
     }
 
     private constructor(private internalState: InternalState) {

@@ -52,6 +52,16 @@ export class Game {
         );
     }
 
+    beginNextNormalTurn(requestingPlayerIdentifier: string): RequestResult {
+        return this.authenticateThenDelegate(
+            requestingPlayerIdentifier,
+            (requestingPlayer: AuthenticatedPlayer) =>
+                this.internalState.beginNextNormalTurn(
+                    requestingPlayer
+                )
+        );
+    }
+
     private internalState: CanTakePlayerRequests
 
     private authenticateThenDelegate(

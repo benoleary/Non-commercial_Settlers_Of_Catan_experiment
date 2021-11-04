@@ -116,8 +116,8 @@ export abstract class MutableHex extends ImmutableHex {
      * @param settlementCorner The corner of this hex chosen for the settlement
      * @param roadForPlacement The road piece to accept on the given edge
      * @param roadEdge The edge of the hex chosen for the road
-     * @returns True with an empty string if the placement was performed, false and an explanation
-     *          otherwise
+     * @returns True and a confirmation message if the placement was performed, false and an
+     *          explanation otherwise
      */
     acceptInitialSettlementAndRoad(
         settlementForPlacement: SettlementPiece,
@@ -160,7 +160,12 @@ export abstract class MutableHex extends ImmutableHex {
             }
         }
 
-        return [true, ""];
+        return [
+            true,
+            `Player ${settlementForPlacement.owningPlayer}`
+            + ` placed settlement on ${settlementCorner} corner`
+            + ` and road on ${roadEdge} edge`
+        ];
     }
 
     /**
@@ -170,8 +175,8 @@ export abstract class MutableHex extends ImmutableHex {
      *
      * @param roadForPlacement The road piece to accept on the given edge
      * @param placementEdge The edge of the hex chosen for the road
-     * @returns True with an empty string if the placement was performed, false and an explanation
-     *          otherwise
+     * @returns True and a confirmation message if the placement was performed, false and an
+     *          explanation otherwise
      */
     acceptRoad(roadForPlacement: RoadPiece, placementEdge: HexToHexDirection): [boolean, string] {
         if (this.hasRoad(placementEdge)) {
@@ -194,7 +199,10 @@ export abstract class MutableHex extends ImmutableHex {
 
         this.acceptedRoads[ImmutableHex.edgeIndex(placementEdge)] = roadForPlacement;
 
-        return [true, ""];
+        return [
+            true,
+            `Player ${roadForPlacement.owningPlayer} placed road on ${placementEdge} edge`
+        ];
     }
 
     /**
@@ -208,8 +216,8 @@ export abstract class MutableHex extends ImmutableHex {
      * @param onPlacement A callback to invoke if the placement is successful, using the resource
      *                    produced by this hex and the resources produced by the neighbors which
      *                    share the chosen corner
-     * @returns True with an empty string if the placement was performed, false and an explanation
-     *          otherwise
+     * @returns True and a confirmation message if the placement was performed, false and an
+     *          explanation otherwise
      */
     acceptSettlement(
         settlementForPlacement: SettlementPiece,
@@ -253,7 +261,11 @@ export abstract class MutableHex extends ImmutableHex {
             cornerSharers.map(sharerWithCorner => sharerWithCorner[0])
         );
 
-        return [true, ""];
+        return [
+            true,
+            `Player ${settlementForPlacement.owningPlayer}`
+            + ` placed settlement on ${placementCorner} corner`
+        ];
     }
 
     hasRoad(roadEdge: HexToHexDirection): boolean {

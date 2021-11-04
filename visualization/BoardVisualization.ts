@@ -142,7 +142,7 @@ class TextHex {
             southWesternRoad,
             pureWesternRoad,
             northWesternRoad
-        ] = TextHex.validHexToHexDirections.map(
+        ] = TextHex.VALID_HEX_TO_HEX_DIRECTIONS.map(
             roadEdge => wideCharacterProvider.getFor(gameHex.getRoadOwner(roadEdge)?.playerName)
         );
 
@@ -153,7 +153,7 @@ class TextHex {
             pureSouthernSettlement,
             southWesternSettlement,
             northWesternSettlement
-        ] = TextHex.validCornerDirections.map(
+        ] = TextHex.VALID_CORNER_DIRECTIONS.map(
             settlementCorner => {
                 const ownerAndType = gameHex.getSettlementOwnerAndType(settlementCorner);
                 if (ownerAndType == undefined) {
@@ -227,8 +227,8 @@ class TextHex {
         return productionRollScore.toString()
     }
 
-    private static readonly validCornerDirections: HexCornerDirection[] =
+    private static readonly VALID_CORNER_DIRECTIONS: HexCornerDirection[] =
         ["N", "NE", "SE", "S", "SW", "NW"];
-    private static readonly validHexToHexDirections: HexToHexDirection[] =
+    private static readonly VALID_HEX_TO_HEX_DIRECTIONS: HexToHexDirection[] =
         ["NE", "E", "SE", "SW", "W", "NW"];
 }

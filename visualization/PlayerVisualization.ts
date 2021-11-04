@@ -13,6 +13,8 @@ export class PlayerVisualization extends VisualizationUsingWideCharacters {
             .map(resourceCard => this.wideCharacterProvider.getFor(resourceCard))
             .join(" ");
         const playerName = displayedPlayer.playerName
-        return `${playerName}${this.wideCharacterProvider.getFor(playerName)}: ${playerHand}`;
+        return (
+            `${playerName} (road: ${this.wideCharacterProvider.getFor(playerName)}): ${playerHand}`
+        );
     }
 }

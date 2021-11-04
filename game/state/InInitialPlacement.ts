@@ -61,16 +61,16 @@ export class InInitialPlacement implements CanTakePlayerRequests {
         const chosenRow = this.internalState.hexBoard.changeBoard()[rowIndexFromZeroInBoard];
         if (chosenRow == undefined) {
             const refusalMessage =
-                `Row ${rowIndexFromZeroInBoard} is not a valid row,`
-                + ` the range is 1 to ${this.internalState.hexBoard.changeBoard().length}`;
+                `Row ${rowIndexFromZeroInBoard} is not a valid row index,`
+                + ` the range is 0 to ${this.internalState.hexBoard.changeBoard().length - 1}`;
             return [this, ["RefusedSameTurn", refusalMessage]];
         }
 
         const chosenHex = chosenRow[hexIndexFromZeroInRow];
         if (chosenHex == undefined) {
             const refusalMessage =
-                `Hex ${hexIndexFromZeroInRow} is not a valid hex,`
-                + ` the range is 1 to ${this.internalState.hexBoard.changeBoard().length}`;
+                `Hex ${hexIndexFromZeroInRow} is not a valid hex index,`
+                + ` the range is 0 to ${chosenRow.length - 1}`;
             return [this, ["RefusedSameTurn", refusalMessage]];
         }
 
@@ -95,12 +95,24 @@ export class InInitialPlacement implements CanTakePlayerRequests {
         // Now the next player gets to place a settlement, or we move to the second round.
         this.playersInPlacementOrder.splice(0, 1);
 
+        const successMessage =
+            `Player ${requestingPlayer.playerName} placed`
+            + ` on hex ${rowIndexFromZeroInBoard}-${hexIndexFromZeroInRow}`
+            + ` a settlement on corner ${settlementCorner}`
+            + ` and a road on edge ${roadEdge}`;
+
         if (this.playersInPlacementOrder.length > 0) {
-            return [this, ["SuccessfulSameTurn", ""]];
+            return [this, ["SuccessfulSameTurn", successMessage]];
         }
 
         const nextRound = this.createNextRound(this.internalState);
-        return [nextRound, ["SuccessfulNewTurn", ""]];
+        return [nextRound, ["SuccessfulNewTurn", successMessage]];
+    }
+
+    beginNextNormalTurn(
+        requestingPlayer: AuthenticatedPlayer
+    ): [CanTakePlayerRequests, RequestResult] {
+        return [this, ["RefusedSameTurn", "still in initial settlement placement phase "]];
     }
 
     private constructor(

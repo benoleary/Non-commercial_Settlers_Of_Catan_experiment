@@ -12,11 +12,15 @@ export interface CanTakePlayerRequests {
     getActivePlayer(): AuthenticatedPlayer | undefined
 
     placeInitialSettlement(
-        requestingPlayerIdentifier: AuthenticatedPlayer,
+        requestingPlayer: AuthenticatedPlayer,
         rowIndexFromZeroInBoard: number,
         hexIndexFromZeroInRow: number,
         settlementCorner: HexCornerDirection,
         roadEdge: HexToHexDirection
+    ): [CanTakePlayerRequests, RequestResult]
+
+    beginNextNormalTurn(
+        requestingPlayer: AuthenticatedPlayer
     ): [CanTakePlayerRequests, RequestResult]
 }
 

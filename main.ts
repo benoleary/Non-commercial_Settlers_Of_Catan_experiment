@@ -3,6 +3,7 @@ import { Game, PlayerNamesInTurnOrder } from "./game/state"
 import { BoardVisualization, PlayerVisualization } from "./visualization/visualization"
 import { ConsoleInterface } from "./interaction/console"
 import { InitialPlacementCommandParser } from "./interaction/InitialPlacementCommandParser"
+import { NormalTurnsCommandParser } from "./interaction/NormalTurnsCommandParser"
 import promptSync from 'prompt-sync';
 
 console.log("Example game played with occasional logging of relevant state");
@@ -68,12 +69,12 @@ while(exampleGame.getPhase() == "InitialPlacement") {
     }
 }
 
-/*
+const normalTurnsCommandParser = new NormalTurnsCommandParser(exampleGame);
 while(exampleGame.getPhase() == "NormalTurns") {
-    const isFineToContinue = consoleInterface.promptAndExecutePlayerRequest();
+    const isFineToContinue =
+        consoleInterface.promptAndExecutePlayerRequest(normalTurnsCommandParser);
 
     if (!isFineToContinue) {
         process.exit();
     }
 }
-*/

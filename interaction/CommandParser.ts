@@ -1,4 +1,6 @@
-import { RequestResult } from "../game/state/interface";
+import { RequestEffect, RequestResult } from "../game/state/interface";
+
+export const INVALID_INPUT_EFFECT: RequestEffect = "RefusedSameTurn";
 
 export interface CommandParser {
     getHelpText(): string
