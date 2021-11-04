@@ -1,4 +1,5 @@
 import { HexCornerDirection, HexToHexDirection } from "../board/hex";
+import { DiceRollScore } from "../resource/resource";
 import { AuthenticatedPlayer } from "../player/player";
 import { CanTakePlayerRequests, ReadableState, RequestResult } from "./interface";
 import { InternalState } from "./InternalState";
@@ -38,13 +39,14 @@ export class InNormalTurns implements CanTakePlayerRequests {
         }
 
         this.activePlayerIndex = (this.activePlayerIndex + 1) % this.numberOfPlayers;
-        this.beginTurn();
+        const diceRollScore = this.beginTurn();
         return [
             this,
             [
                 "SuccessfulNewTurn",
                 `Player ${requestingPlayer.playerName} passed turn`
                 + ` to player ${this.getActivePlayer()?.playerName}`
+                + ` and the dice rolled ${diceRollScore}`
             ]
         ];
     }
@@ -56,8 +58,9 @@ export class InNormalTurns implements CanTakePlayerRequests {
         this.beginTurn();
     }
 
-    private beginTurn(): void {
-        // This should roll the dice.
+    private beginTurn(): DiceRollScore {
+        // This should roll the dice and return the result for printing.
+        return 7n;
     }
 
     private readonly numberOfPlayers: number;
