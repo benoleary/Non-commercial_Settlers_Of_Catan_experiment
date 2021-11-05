@@ -1,9 +1,7 @@
 import { AuthenticatedPlayer } from "../player/player";
-import { ProductionRollScore, ResourceType } from "../resource/resource";
+import { ProductionRollScore, CallbackOnResourceProduction } from "../resource/resource";
 import { RoadPiece, SettlementPiece, SettlementType } from "./piece";
 import { HexCornerDirection, HexToHexDirection, ImmutableHex } from "./ImmutableHex";
-
-export type HexCallback = (producedResource: ResourceType) => void;
 
 export abstract class MutableHex extends ImmutableHex {
     viewNeighbor(neighborDirection: HexToHexDirection): ImmutableHex | undefined {
@@ -124,7 +122,7 @@ export abstract class MutableHex extends ImmutableHex {
         settlementCorner: HexCornerDirection,
         roadForPlacement: RoadPiece,
         roadEdge: HexToHexDirection,
-        onPlacement: HexCallback | undefined
+        onPlacement: CallbackOnResourceProduction | undefined
     ): [boolean, string] {
         const validRoadEdgesForSettlement =
             ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringCorner(settlementCorner);
@@ -222,7 +220,7 @@ export abstract class MutableHex extends ImmutableHex {
     acceptSettlement(
         settlementForPlacement: SettlementPiece,
         placementCorner: HexCornerDirection,
-        onPlacement?: HexCallback
+        onPlacement: CallbackOnResourceProduction | undefined
     ): [boolean, string] {
         if (
             !ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringCorner(placementCorner).some(
@@ -350,7 +348,9 @@ export abstract class MutableHex extends ImmutableHex {
         );
     }
 
-    abstract onProductionRoll(callbackFunction: HexCallback): void
+    abstract onResourceProductionEvent(callbackFunction: CallbackOnResourceProduction): void
+
+    abstract produceResource(): void
 
     protected static haveOnlyEmptySharedCorners(
         cornerSharers: [MutableHex, HexCornerDirection][]
@@ -435,7 +435,9 @@ export abstract class MutableHex extends ImmutableHex {
         this.acceptedSettlements[ImmutableHex.cornerIndex(settlementCorner)] =
             settlementForPlacement;
         for (const cornerSharer of cornerSharers) {
-            cornerSharer.onProductionRoll(settlementForPlacement.getHexProductionRollCallback());
+            cornerSharer.onResourceProductionEvent(
+                settlementForPlacement.getCallbackOnNormalTurnProduction()
+            );
         }
     }
 

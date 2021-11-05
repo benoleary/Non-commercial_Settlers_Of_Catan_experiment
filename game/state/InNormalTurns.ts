@@ -1,8 +1,10 @@
 import { HexCornerDirection, HexToHexDirection } from "../board/hex";
 import { SixSidedDieScore } from "../die/die";
+import { RobberActivationScore } from "../resource/resource";
 import { AuthenticatedPlayer } from "../player/player";
 import { CanTakePlayerRequests, ReadableState, RequestResult } from "./interface";
 import { InternalState } from "./InternalState";
+import { MutableHex } from "../board/MutableHex";
 
 export class InNormalTurns implements CanTakePlayerRequests {
     static createInNormalTurns(internalState: InternalState): CanTakePlayerRequests {
@@ -53,6 +55,26 @@ export class InNormalTurns implements CanTakePlayerRequests {
         this.internalState.gamePhase = "NormalTurns";
         this.numberOfPlayers = this.internalState.playersInTurnOrder.length;
         this.activePlayerIndex = 0;
+
+        this.hexesByResourceProductionScore = new Map<bigint, MutableHex[]>();
+        const allMutableHexes = this.internalState.hexBoard.changeBoard().flatMap(
+            hexRow =>hexRow.filter(mutableHex => mutableHex != undefined)
+        );
+        for (const mutableHex of allMutableHexes) {
+            const hexScore = mutableHex!.productionRollScore;
+            if (hexScore == undefined) {
+                continue;
+            }
+
+            let hexesForScore = this.hexesByResourceProductionScore.get(hexScore);
+            if (hexesForScore == undefined) {
+                hexesForScore = [];
+                this.hexesByResourceProductionScore.set(hexScore, hexesForScore);
+            }
+
+            hexesForScore.push(mutableHex!);
+        }
+
         const diceRollScore = this.beginTurn();
         this.internalState.lastSuccessfulRequestResult = [
             "SuccessfulNewTurn",
@@ -62,10 +84,26 @@ export class InNormalTurns implements CanTakePlayerRequests {
     }
 
     private beginTurn(): [SixSidedDieScore, SixSidedDieScore] {
-        // This should roll the dice and return the result for printing.
-        return [1n, 6n];
+        const firstRoll = this.internalState.sixSidedDie.newRoll();
+        const secondRoll = this.internalState.sixSidedDie.newRoll();
+
+        const rolledScore = firstRoll + secondRoll;
+        if (rolledScore == RobberActivationScore) {
+            // TODO: get players to discard cards if necessary, move robber
+            // (probably just at random for both)
+        } else {
+            const hexesProducingOnThisRoll = this.hexesByResourceProductionScore?.get(rolledScore);
+            if (hexesProducingOnThisRoll != undefined) {
+                for (const producingHex of hexesProducingOnThisRoll) {
+                    producingHex.produceResource();
+                }
+            }
+        }
+
+        return [firstRoll, secondRoll];
     }
 
     private readonly numberOfPlayers: number;
     private activePlayerIndex: number;
+    private hexesByResourceProductionScore: Map<bigint, MutableHex[]>
 }

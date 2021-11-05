@@ -1,20 +1,31 @@
-import { ProductionRollScore, ResourceType } from "../resource/resource";
+import { CallbackOnResourceProduction, ProductionRollScore, ResourceType } from "../resource/resource";
 import { LandType } from "./ImmutableHex";
-import { HexCallback, MutableHex } from "./MutableHex";
+import { MutableHex } from "./MutableHex";
 
 export abstract class MutableProductiveHex extends MutableHex {
+    /**
+     * The classed derived from this always produce a defined ResourceType.
+     */
+    abstract get producedResource(): ResourceType
+
     /**
      * This accepts a callback to invoke if this hex is activated because the dice rolled its core,
      * and the callback will be given the value of the resource type of this hex.
      *
      * @param callbackFunction A function to invoke when the dice roll the score of this hex
      */
-    onProductionRoll(callbackFunction: HexCallback): void {
+     onResourceProductionEvent(callbackFunction: CallbackOnResourceProduction): void {
         // We do not need a method to remove observers because this is used only for settlements or
         // cities, and the implementation is the same object in a different state, so the callback
         // remains the same, and also settlements are never destroyed, only upgraded, and cities
         // are never destroyed.
         this.callbackFunctions.push(callbackFunction);
+    }
+
+    produceResource(): void {
+        for (const callbackFunction of this.callbackFunctions) {
+            callbackFunction(this.producedResource);
+        }
     }
 
     protected constructor(
@@ -25,7 +36,7 @@ export abstract class MutableProductiveHex extends MutableHex {
         this.callbackFunctions = [];
     }
 
-    private callbackFunctions: HexCallback[]
+    private callbackFunctions: CallbackOnResourceProduction[]
 }
 
 
@@ -33,10 +44,15 @@ export class DesertHex extends MutableHex {
     get landType(): LandType { return "desert"; }
     get producedResource(): undefined { return undefined; }
 
-    onProductionRoll(callbackFunction: HexCallback): void {
+    onResourceProductionEvent(callbackFunction: CallbackOnResourceProduction): void {
         // The desert hex has no dice roll score and never produces anything.
         // But it's easier to just let it accept any callbacks and just ignore them.
     }
+
+    /**
+     * This should never even be called for a DesertHex, but if it is, it can simply do nothing.
+     */
+    produceResource(): void { }
 
     constructor() {
         // There is only one desert hex, and the robber piece starts there.

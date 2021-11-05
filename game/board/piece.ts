@@ -17,11 +17,12 @@ export class SettlementPiece {
         return this.settlementType;
     }
 
-    getHexProductionRollCallback(): (producedResource: ResourceType) => void {
+    getCallbackOnNormalTurnProduction(): (producedResource: ResourceType) => void {
         return this.propagateResourceToPlayer.bind(this);
     }
 
     propagateResourceToPlayer(producedResource: ResourceType): void {
-        // TODO: implement this.
+        const numberOfCards = this.getType() == "city" ? 2n : 1n;
+        this.owningPlayer.acceptResource(producedResource, numberOfCards);
     }
 }
