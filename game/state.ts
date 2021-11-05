@@ -1,5 +1,6 @@
 import { HexBoard, HexCornerDirection, HexMatrix, HexToHexDirection, ImmutableHex }
     from "./board/hex";
+import { SixSidedDie } from "./die/die"
 import { AuthenticatedPlayer } from "./player/player";
 import { CanTakePlayerRequests, GamePhase, PlayerNamesInTurnOrder, RequestResult }
     from "./state/interface";
@@ -10,10 +11,15 @@ export { PlayerNamesInTurnOrder }
 export class Game {
     constructor(
         public readonly playerNamesInTurnOrder: PlayerNamesInTurnOrder,
-        hexBoard: HexBoard
+        hexBoard: HexBoard,
+        sixSidedDie: SixSidedDie
     ) {
         this.internalState =
-            InInitialPlacement.createInInitialPlacement(playerNamesInTurnOrder, hexBoard);
+            InInitialPlacement.createInInitialPlacement(
+                playerNamesInTurnOrder,
+                hexBoard,
+                sixSidedDie
+            );
     }
 
     viewBoard(): HexMatrix<ImmutableHex> {
@@ -22,6 +28,10 @@ export class Game {
 
     getPhase(): GamePhase {
         return this.internalState.getReadableState().getPhase();
+    }
+
+    getLastSuccessfulRequestResult(): RequestResult | undefined {
+        return this.internalState.getReadableState().getLastSuccessfulRequestResult();
     }
 
     getPlayer(playerIdentifier: string): AuthenticatedPlayer | undefined {

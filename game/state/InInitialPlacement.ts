@@ -1,5 +1,6 @@
 import { HexBoard, HexCornerDirection, HexToHexDirection } from "../board/hex";
 import { RoadPiece, SettlementPiece } from "../board/piece";
+import { SixSidedDie } from "../die/die";
 import { ResourceType } from "../resource/resource";
 import { AuthenticatedPlayer } from "../player/player";
 import { CanTakePlayerRequests, PlayerNamesInTurnOrder, ReadableState, RequestResult } from "./interface";
@@ -9,13 +10,19 @@ import { InNormalTurns } from "./InNormalTurns";
 export class InInitialPlacement implements CanTakePlayerRequests {
     static createInInitialPlacement(
         playerNamesInTurnOrder: PlayerNamesInTurnOrder,
-        hexBoard: HexBoard
+        hexBoard: HexBoard,
+        sixSidedDie: SixSidedDie
     ): CanTakePlayerRequests {
         const initialState = new InternalState(
             hexBoard,
+            sixSidedDie,
             playerNamesInTurnOrder.map(playerName => new AuthenticatedPlayer(playerName)),
             "InitialPlacement"
         );
+        initialState.lastSuccessfulRequestResult = [
+            "SuccessfulNewTurn",
+            "First initial placement turn has begun"
+        ];
 
         // We need a shallow copy of the players since we will be removing players from this list
         // once they have made their move. For the first round of initial placements, the players
@@ -102,11 +109,16 @@ export class InInitialPlacement implements CanTakePlayerRequests {
             + ` and a road on edge ${roadEdge}`;
 
         if (this.playersInPlacementOrder.length > 0) {
-            return [this, ["SuccessfulSameTurn", successMessage]];
+            this.internalState.lastSuccessfulRequestResult =
+                ["SuccessfulSameTurn", successMessage];
+            return [this, this.internalState.lastSuccessfulRequestResult];
         }
 
+        // It is important to update lastSuccessfulRequestResult before creating nextRound so
+        // that we do not overwrite a new lastSuccessfulRequestResult written by nextRound.
+        this.internalState.lastSuccessfulRequestResult = ["SuccessfulNewTurn", successMessage];
         const nextRound = this.createNextRound(this.internalState);
-        return [nextRound, ["SuccessfulNewTurn", successMessage]];
+        return [nextRound, this.internalState.lastSuccessfulRequestResult];
     }
 
     beginNextNormalTurn(

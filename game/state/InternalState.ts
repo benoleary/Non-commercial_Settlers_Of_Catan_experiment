@@ -1,6 +1,7 @@
 import { HexBoard, HexMatrix, ImmutableHex } from "../board/hex";
+import { SixSidedDie } from "../die/die";
 import { AuthenticatedPlayer } from "../player/player";
-import { GamePhase, ReadableState } from "./interface";
+import { GamePhase, ReadableState, RequestResult } from "./interface";
 
 export class InternalState implements ReadableState {
     playersByName: {
@@ -19,8 +20,15 @@ export class InternalState implements ReadableState {
         return this.playersByName[playerIdentifier];
     }
 
+    getLastSuccessfulRequestResult(): RequestResult | undefined {
+        return this.lastSuccessfulRequestResult;
+    }
+
+    public lastSuccessfulRequestResult: RequestResult | undefined;
+
     constructor(
         public hexBoard: HexBoard,
+        public sixSidedDie: SixSidedDie,
         public playersInTurnOrder: AuthenticatedPlayer[],
         public gamePhase: GamePhase
     ) {
@@ -28,5 +36,7 @@ export class InternalState implements ReadableState {
         for (const playerInTurnOrder of this.playersInTurnOrder) {
             this.playersByName[playerInTurnOrder.playerName] = playerInTurnOrder;
         }
+
+        this.lastSuccessfulRequestResult = undefined;
     }
 }

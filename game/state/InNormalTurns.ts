@@ -1,5 +1,5 @@
 import { HexCornerDirection, HexToHexDirection } from "../board/hex";
-import { DiceRollScore } from "../resource/resource";
+import { SixSidedDieScore } from "../die/die";
 import { AuthenticatedPlayer } from "../player/player";
 import { CanTakePlayerRequests, ReadableState, RequestResult } from "./interface";
 import { InternalState } from "./InternalState";
@@ -40,27 +40,30 @@ export class InNormalTurns implements CanTakePlayerRequests {
 
         this.activePlayerIndex = (this.activePlayerIndex + 1) % this.numberOfPlayers;
         const diceRollScore = this.beginTurn();
-        return [
-            this,
-            [
-                "SuccessfulNewTurn",
-                `Player ${requestingPlayer.playerName} passed turn`
-                + ` to player ${this.getActivePlayer()?.playerName}`
-                + ` and the dice rolled ${diceRollScore}`
-            ]
+        this.internalState.lastSuccessfulRequestResult = [
+            "SuccessfulNewTurn",
+            `Player ${requestingPlayer.playerName} passed the turn`
+            + ` to player ${this.getActivePlayer()?.playerName} who rolled`
+            + ` ${diceRollScore[0]} + ${diceRollScore[1]} = ${diceRollScore[0] + diceRollScore[1]}`
         ];
+        return [this, this.internalState.lastSuccessfulRequestResult];
     }
 
     private constructor(private internalState: InternalState) {
         this.internalState.gamePhase = "NormalTurns";
         this.numberOfPlayers = this.internalState.playersInTurnOrder.length;
         this.activePlayerIndex = 0;
-        this.beginTurn();
+        const diceRollScore = this.beginTurn();
+        this.internalState.lastSuccessfulRequestResult = [
+            "SuccessfulNewTurn",
+            `First normal turn has begun: player ${this.getActivePlayer()?.playerName} rolled`
+            + ` ${diceRollScore[0]} + ${diceRollScore[1]} = ${diceRollScore[0] + diceRollScore[1]}`
+        ];
     }
 
-    private beginTurn(): DiceRollScore {
+    private beginTurn(): [SixSidedDieScore, SixSidedDieScore] {
         // This should roll the dice and return the result for printing.
-        return 7n;
+        return [1n, 6n];
     }
 
     private readonly numberOfPlayers: number;

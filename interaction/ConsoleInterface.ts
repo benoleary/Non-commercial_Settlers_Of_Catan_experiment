@@ -39,14 +39,18 @@ export class ConsoleInterface {
      */
     promptAndExecutePlayerRequest(commandParser: CommandParser): boolean {
         this.showBoard();
-        console.log(this.quitInstruction);
-        console.log(this.helpInstruction);
 
         for (const playerName of this.playerNamesInTurnOrder) {
             console.log(
                 this.playerVisualization.asString(this.currentGame.getPlayer(playerName)!)
             );
         }
+
+        console.log(
+            `Last performed request: ${this.currentGame.getLastSuccessfulRequestResult()}`
+        );
+        console.log(this.quitInstruction);
+        console.log(this.helpInstruction);
 
         let rawPlayerRequest = this.consolePrompt("Command: ");
         while(ConsoleInterface.HELP_KEYWORDS.includes(rawPlayerRequest.toUpperCase())) {

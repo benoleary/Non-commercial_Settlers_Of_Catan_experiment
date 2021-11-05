@@ -1,5 +1,6 @@
 import { HexBoard } from "./game/board/hex"
 import { Game, PlayerNamesInTurnOrder } from "./game/state"
+import { FlatRandomOneToSix } from "./game/die/die"
 import { BoardVisualization, PlayerVisualization } from "./visualization/visualization"
 import { ConsoleInterface } from "./interaction/console"
 import { InitialPlacementCommandParser } from "./interaction/InitialPlacementCommandParser"
@@ -42,7 +43,8 @@ const playerNamesInTurnOrder: PlayerNamesInTurnOrder =
     playerNumberArguments[0] == fourPlayersArgument
     ? ["p1", "p2", "p3", "p4"]
     : ["p1", "p2", "p3"];
-let exampleGame = new Game(playerNamesInTurnOrder, HexBoard.getFullyRandomBoard());
+let exampleGame =
+    new Game(playerNamesInTurnOrder, HexBoard.getFullyRandomBoard(), new FlatRandomOneToSix());
 const hasEmojiArgument = process.argv.includes(emojiArgument)
 let playerVisualization = new PlayerVisualization(hasEmojiArgument);
 let boardVisualization = new BoardVisualization(hasEmojiArgument);
@@ -68,6 +70,8 @@ while(exampleGame.getPhase() == "InitialPlacement") {
         process.exit();
     }
 }
+
+console.log("Initial placement phase ended");
 
 const normalTurnsCommandParser = new NormalTurnsCommandParser(exampleGame);
 while(exampleGame.getPhase() == "NormalTurns") {

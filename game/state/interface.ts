@@ -28,4 +28,5 @@ export interface ReadableState {
     viewBoard(): HexMatrix<ImmutableHex>
     getPhase(): GamePhase
     getPlayer(playerIdentifier: string): AuthenticatedPlayer | undefined
+    getLastSuccessfulRequestResult(): RequestResult | undefined
 }
