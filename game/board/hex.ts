@@ -9,4 +9,4 @@ export {
     HexToHexDirection,
     ImmutableHex,
     RowIndexInBoard
-}
+};

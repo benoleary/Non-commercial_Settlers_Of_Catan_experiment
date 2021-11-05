@@ -1,4 +1,4 @@
-import { PlayerNamesInTurnOrder, Game } from "../game/state";
+import { PlayerNamesInTurnOrder, Game } from "../game/Game";
 import { BoardVisualization, PlayerVisualization } from "../visualization/visualization";
 import { CommandParser } from "./CommandParser";
 import promptSync from 'prompt-sync';
@@ -20,9 +20,9 @@ export class ConsoleInterface {
         this.quitKeywords = quitKeywords.map(quitKeyword => quitKeyword.toUpperCase());
         const quitKeywordEnumeration =
             quitKeywords.map(quitKeyword => `"${quitKeyword}"`).join(" or ");
-        this.quitInstruction = `(Enter ${quitKeywordEnumeration} to end this program.)`;
+        this.quitInstruction = `Enter ${quitKeywordEnumeration} to end this program.`;
         this.helpInstruction =
-            `(Enter ${ConsoleInterface.HELP_KEYWORD} to show help for the game's current phase.)`;
+            `Enter ${ConsoleInterface.HELP_KEYWORD} to show help for the game's current phase.`;
 
         // Just in case someone enters the quote marks as well...
         this.quitKeywords.push(...this.quitKeywords.map(quitKeyword => `"${quitKeyword}"`));
@@ -49,13 +49,12 @@ export class ConsoleInterface {
         console.log(
             `Last performed request: ${this.currentGame.getLastSuccessfulRequestResult()}`
         );
-        console.log(this.quitInstruction);
-        console.log(this.helpInstruction);
+        console.log(`(${this.quitInstruction} ${this.helpInstruction})`);
 
         let rawPlayerRequest = this.consolePrompt("Command: ");
         while(ConsoleInterface.HELP_KEYWORDS.includes(rawPlayerRequest.toUpperCase())) {
             console.log(commandParser.getHelpText());
-            rawPlayerRequest = this.consolePrompt("Command: ");;
+            rawPlayerRequest = this.consolePrompt("Command: ");
         }
 
         console.log("########");

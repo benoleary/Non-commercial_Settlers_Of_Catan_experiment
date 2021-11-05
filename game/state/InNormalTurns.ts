@@ -1,11 +1,20 @@
 import { HexCornerDirection, HexToHexDirection } from "../board/hex";
-import { SixSidedDieScore } from "../die/die";
-import { RobberActivationScore } from "../resource/resource";
-import { AuthenticatedPlayer } from "../player/player";
-import { CanTakePlayerRequests, ReadableState, RequestResult } from "./interface";
-import { InternalState } from "./InternalState";
 import { MutableHex } from "../board/MutableHex";
+import { SixSidedDieScore } from "../die/die";
+import { ResourceCardSet, RobberActivationScore } from "../resource/resource";
+import { AuthenticatedPlayer } from "../player/player";
+import { ReadableState, RequestResult } from "./ReadableState";
+import { CanTakePlayerRequests } from "./CanTakePlayerRequests";
+import { InternalState } from "./InternalState";
+import { AfterVictory } from "./AfterVictory";
 
+/**
+ * This class applies all the rules for the phase of the game which would be considered the "main"
+ * phase of the game, afer the initial pieces have been placed: players rolling the dice for
+ * production, making trades, and buying and placing pieces on the board (also buying and playing
+ * development cards but these will not be implemented). It creaates an AfterVictory instance with
+ * its InternalState instance once an action results in a player reaching the threshold to win.
+ */
 export class InNormalTurns implements CanTakePlayerRequests {
     static createInNormalTurns(internalState: InternalState): CanTakePlayerRequests {
         return new InNormalTurns(internalState);
@@ -49,6 +58,46 @@ export class InNormalTurns implements CanTakePlayerRequests {
             + ` ${diceRollScore[0]} + ${diceRollScore[1]} = ${diceRollScore[0] + diceRollScore[1]}`
         ];
         return [this, this.internalState.lastSuccessfulRequestResult];
+    }
+
+    makeMaritimeTrade(
+        requestingPlayer: AuthenticatedPlayer,
+        offeredOutgoingResources: ResourceCardSet,
+        desiredIncomingResources: ResourceCardSet
+    ): [CanTakePlayerRequests, RequestResult] {
+        if (requestingPlayer != this.getActivePlayer()) {
+            const refusalMessage =
+                `${requestingPlayer.playerName} is not the active player,`
+                + ` ${this.getActivePlayer()?.playerName} is`;
+            return [this, ["RefusedSameTurn", refusalMessage]];
+        }
+
+        if (!requestingPlayer.canAfford(offeredOutgoingResources)) {
+            const offeredButNotAfforded = offeredOutgoingResources.asArray().join(", ");
+            const refusalMessage =
+                `${requestingPlayer.playerName} cannot afford to offer ${offeredButNotAfforded}`;
+            return [this, ["RefusedSameTurn", refusalMessage]];
+        }
+
+        const givingText = offeredOutgoingResources.asArray().join(", ");
+        const gettingText = desiredIncomingResources.asArray().join(", ");
+        const isValidMaritimeTrade =
+            this.internalState.cardBank.makeMaritimeTrade(
+                requestingPlayer,
+                offeredOutgoingResources,
+                desiredIncomingResources
+        );
+        if (!isValidMaritimeTrade) {
+            const givingText = offeredOutgoingResources.asArray().join(", ");
+            const gettingText = desiredIncomingResources.asArray().join(", ");
+            const refusalMessage =
+                `Giving ${givingText} to get ${gettingText} is not a valid maritime trade`;
+            return [this, ["RefusedSameTurn", refusalMessage]];
+        }
+
+        const successMessage =
+            `${requestingPlayer.playerName} gave ${givingText} and got ${gettingText}`;
+        return [this, ["SuccessfulSameTurn", successMessage]];
     }
 
     private constructor(private internalState: InternalState) {
@@ -105,5 +154,5 @@ export class InNormalTurns implements CanTakePlayerRequests {
 
     private readonly numberOfPlayers: number;
     private activePlayerIndex: number;
-    private hexesByResourceProductionScore: Map<bigint, MutableHex[]>
+    private hexesByResourceProductionScore: Map<bigint, MutableHex[]>;
 }

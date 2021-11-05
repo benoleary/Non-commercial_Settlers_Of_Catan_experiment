@@ -3,11 +3,15 @@ import { ProductionRollScore, CallbackOnResourceProduction } from "../resource/r
 import { RoadPiece, SettlementPiece, SettlementType } from "./piece";
 import { HexCornerDirection, HexToHexDirection, ImmutableHex } from "./ImmutableHex";
 
+/**
+ * This class provides the means for the game state to change the state of a hex, whether
+ * initially informing hexes of their neighbors so that they can determine among themselves whether
+ * their shared edges have roads and their corners have settlements, or placing pieces on the hex.
+ *
+ * The instances of MutableHex have the responsibility of determining if the placement of a piece
+ * is valid or not.
+ */
 export abstract class MutableHex extends ImmutableHex {
-    viewNeighbor(neighborDirection: HexToHexDirection): ImmutableHex | undefined {
-        return this.getMutableNeighbor(neighborDirection);
-    }
-
     getRoadOwner(roadEdge: HexToHexDirection): AuthenticatedPlayer | undefined {
         return this.getPlayerOwningRoad(roadEdge);
     }

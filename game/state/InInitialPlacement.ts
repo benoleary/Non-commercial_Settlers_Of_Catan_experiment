@@ -3,10 +3,24 @@ import { RoadPiece, SettlementPiece } from "../board/piece";
 import { SixSidedDie } from "../die/die";
 import { ResourceType } from "../resource/resource";
 import { AuthenticatedPlayer } from "../player/player";
-import { CanTakePlayerRequests, PlayerNamesInTurnOrder, ReadableState, RequestResult } from "./interface";
+import { ResourceCardSet } from "../resource/resource";
+import { PlayerNamesInTurnOrder, ReadableState, RequestResult } from "./ReadableState";
+import { CanTakePlayerRequests } from "./CanTakePlayerRequests";
 import { InternalState } from "./InternalState";
 import { InNormalTurns } from "./InNormalTurns";
 
+/**
+ * This class applies all the rules for the phase of the game where players are placing their
+ * initial settlements with roads, using an instance of InternalState to represent the state of
+ * the game without rules, which is passed on to the InNormalTurns instance which applies the
+ * rules to the phase following the initial placement phase.
+ *
+ * Actually an instance of InInitialPlacement represents one round of players making one placement
+ * each. Once the first round is finished, the initial instance creates a new instance with the
+ * players in the reverse order (as specified by the rules to try to mitigate the advantage of
+ * playing first) and the same InternalState instance. Then that instance creates the InNormalTurns
+ * instance, again with the same InternalState instance.
+ */
 export class InInitialPlacement implements CanTakePlayerRequests {
     static createInInitialPlacement(
         playerNamesInTurnOrder: PlayerNamesInTurnOrder,
@@ -123,6 +137,14 @@ export class InInitialPlacement implements CanTakePlayerRequests {
 
     beginNextNormalTurn(
         requestingPlayer: AuthenticatedPlayer
+    ): [CanTakePlayerRequests, RequestResult] {
+        return [this, ["RefusedSameTurn", "still in initial settlement placement phase "]];
+    }
+
+    makeMaritimeTrade(
+        requestingPlayer: AuthenticatedPlayer,
+        offeredOutgoingResources: ResourceCardSet,
+        desiredIncomingResources: ResourceCardSet
     ): [CanTakePlayerRequests, RequestResult] {
         return [this, ["RefusedSameTurn", "still in initial settlement placement phase "]];
     }

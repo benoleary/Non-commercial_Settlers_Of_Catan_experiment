@@ -1,5 +1,9 @@
 import { SixSidedDie, SixSidedDieScore } from "./SixSidedDie";
 
+/**
+ * This class implements a six-sided die using the native Math.random function, but because of
+ * this, it has no means of deterministically reproducing the sequence using a seed.
+ */
 export class FlatRandomOneToSix implements SixSidedDie {
     newRoll(): SixSidedDieScore {
         const betweenZeroAndSix = Math.random() * 6.0;

@@ -2,8 +2,9 @@ import { HexBoard, HexCornerDirection, HexMatrix, HexToHexDirection, ImmutableHe
     from "./board/hex";
 import { SixSidedDie } from "./die/die"
 import { AuthenticatedPlayer } from "./player/player";
-import { CanTakePlayerRequests, GamePhase, PlayerNamesInTurnOrder, RequestResult }
-    from "./state/interface";
+import { ResourceCardSet } from "./resource/resource";
+import { GamePhase, PlayerNamesInTurnOrder, RequestResult } from "./state/ReadableState";
+import { CanTakePlayerRequests} from "./state/CanTakePlayerRequests";
 import { InInitialPlacement } from "./state/InInitialPlacement";
 
 export { PlayerNamesInTurnOrder }
@@ -68,6 +69,22 @@ export class Game {
             (requestingPlayer: AuthenticatedPlayer) =>
                 this.internalState.beginNextNormalTurn(
                     requestingPlayer
+                )
+        );
+    }
+
+    makeMaritimeTrade(
+        requestingPlayerIdentifier: string,
+        offeredOutgoingResources: ResourceCardSet,
+        desiredIncomingResources: ResourceCardSet
+    ): RequestResult {
+        return this.authenticateThenDelegate(
+            requestingPlayerIdentifier,
+            (requestingPlayer: AuthenticatedPlayer) =>
+                this.internalState.makeMaritimeTrade(
+                    requestingPlayer,
+                    offeredOutgoingResources,
+                    desiredIncomingResources
                 )
         );
     }

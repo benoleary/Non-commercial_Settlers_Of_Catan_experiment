@@ -1,5 +1,5 @@
 import { HexBoard } from "./game/board/hex"
-import { Game, PlayerNamesInTurnOrder } from "./game/state"
+import { Game, PlayerNamesInTurnOrder } from "./game/Game"
 import { FlatRandomOneToSix } from "./game/die/die"
 import { BoardVisualization, PlayerVisualization } from "./visualization/visualization"
 import { ConsoleInterface } from "./interaction/console"

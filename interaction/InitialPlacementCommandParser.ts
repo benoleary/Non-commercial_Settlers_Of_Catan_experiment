@@ -1,5 +1,5 @@
-import { Game } from "../game/state";
-import { RequestResult } from "../game/state/interface";
+import { Game } from "../game/Game";
+import { RequestResult } from "../game/state/ReadableState";
 import { HexSelector } from "./HexSelector";
 import { CommandParser, INVALID_INPUT_EFFECT } from "./CommandParser";
 
@@ -29,7 +29,7 @@ export class InitialPlacementCommandParser implements CommandParser {
     performRequest(playerIdentifier: string, requestWords: string[]): RequestResult {
         if (requestWords.length != 4) {
             return [
-                "RefusedSameTurn",
+                INVALID_INPUT_EFFECT,
                 "Required exactly 5 \"words\": player number, row letter, hex number,"
                 + " settlement corner, road edge"
             ];

@@ -15,6 +15,11 @@ export type HexMatrix<T extends ImmutableHex>
 export type RowIndexInBoard = 0 | 1 | 2 | 3 | 4;
 export type HexIndexInRow = 0 | 1 | 2 | 3 | 4;
 
+/**
+ * This class represents the hex tiles of the play area, arranged as a 5 by 5 grid with empty
+ * upper-left and lower-right diagonals such that the hexes are connected as hexagonal tiles should
+ * be.
+ */
 export class HexBoard {
     static getFullyRandomBoard(): HexBoard {
         // This information cannot be fully deduced from the manual alone. I looked at my physical

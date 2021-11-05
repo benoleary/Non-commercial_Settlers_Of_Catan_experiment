@@ -2,6 +2,9 @@ import { CallbackOnResourceProduction, ProductionRollScore, ResourceType } from 
 import { LandType } from "./ImmutableHex";
 import { MutableHex } from "./MutableHex";
 
+/**
+ * This class specializes MutableHex into classes which each represent a kind of hex tile.
+ */
 export abstract class MutableProductiveHex extends MutableHex {
     /**
      * The classed derived from this always produce a defined ResourceType.

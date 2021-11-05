@@ -7,8 +7,15 @@ export type HexCornerDirection = "N" | "NE" | "SE" | "S" | "SW" | "NW";
 export type ProductiveType = "hills" | "forest" | "mountains" | "fields" | "pasture";
 export type LandType = ProductiveType | "desert";
 
-// We can build hex classes on an abstract base since there is going to be no multiple
-// inheritance.
+/**
+ * This class offers the read-only information representing a hex. Pieces exist on a hex,
+ * either on a corner (settlement) or on an edge (road), though both hexes sharing an edge will be
+ * seen as having the same road piece, and all three hexes sharing a corner will be seen as having
+ * the same settlement.
+ *
+ * We can build hex classes on an abstract base since there is going to be no multiple
+ * inheritance.
+ */
 export abstract class ImmutableHex {
     abstract get landType(): LandType
     abstract get producedResource(): ResourceType | undefined
@@ -17,23 +24,21 @@ export abstract class ImmutableHex {
         return this.isOccupiedByRobber;
     }
 
+    /**
+     * Since roads never change and have only one characteristic, it suffices to basically declare
+     * which player (if any) "owns" the edge of a hex.
+     */
     abstract getRoadOwner(roadEdge: HexToHexDirection): AuthenticatedPlayer | undefined
 
+    /**
+     * The mechanics of how much a settlement produces is determined inside the SettlementPiece
+     * class, but similarly to the road case, since they only ever have 2 states, it is sufficient
+     * for reading purposes to return which player owns the settlement (if any) on the corner, and
+     * whetehr it is a city or not.
+     */
     abstract getSettlementOwnerAndType(
         settlementCorner: HexCornerDirection
     ): [AuthenticatedPlayer, SettlementType] | undefined
-
-    /**
-     * This should return the neighbor of this hex in the given direction.
-     *
-     * This is really just exposing some debugging functionality, since only mutable hexes are
-     * going to need to know about their neighbors. External components which know only about
-     * immutable hexes will also know about their board positions so will not need to query the
-     * hexes about their neighbors. However, it is harmless to allow it.
-     *
-     * @param neighborDirection The direction of the neighbor from the receiver hex
-     */
-    abstract viewNeighbor(neighborDirection: HexToHexDirection): ImmutableHex | undefined
 
     protected constructor(
         public readonly productionRollScore: ProductionRollScore | undefined,
