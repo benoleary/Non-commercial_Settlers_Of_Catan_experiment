@@ -89,6 +89,42 @@ export class Game {
         );
     }
 
+    buildRoad(
+        requestingPlayerIdentifier: string,
+        rowIndexFromZeroInBoard: number,
+        hexIndexFromZeroInRow: number,
+        roadEdge: HexToHexDirection
+    ): RequestResult {
+        return this.authenticateThenDelegate(
+            requestingPlayerIdentifier,
+            (requestingPlayer: AuthenticatedPlayer) =>
+                this.internalState.buildRoad(
+                    requestingPlayer,
+                    rowIndexFromZeroInBoard,
+                    hexIndexFromZeroInRow,
+                    roadEdge
+                )
+        );
+    }
+
+    buildSettlement(
+        requestingPlayerIdentifier: string,
+        rowIndexFromZeroInBoard: number,
+        hexIndexFromZeroInRow: number,
+        settlementCorner: HexCornerDirection
+    ): RequestResult {
+        return this.authenticateThenDelegate(
+            requestingPlayerIdentifier,
+            (requestingPlayer: AuthenticatedPlayer) =>
+                this.internalState.buildSettlement(
+                    requestingPlayer,
+                    rowIndexFromZeroInBoard,
+                    hexIndexFromZeroInRow,
+                    settlementCorner
+                )
+        );
+    }
+
     private internalState: CanTakePlayerRequests
 
     private authenticateThenDelegate(

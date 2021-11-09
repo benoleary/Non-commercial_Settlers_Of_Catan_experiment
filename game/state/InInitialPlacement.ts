@@ -138,7 +138,7 @@ export class InInitialPlacement implements CanTakePlayerRequests {
     beginNextNormalTurn(
         requestingPlayer: AuthenticatedPlayer
     ): [CanTakePlayerRequests, RequestResult] {
-        return [this, ["RefusedSameTurn", "still in initial settlement placement phase "]];
+        return [this, ["RefusedSameTurn", "still in initial settlement placement phase"]];
     }
 
     makeMaritimeTrade(
@@ -146,7 +146,25 @@ export class InInitialPlacement implements CanTakePlayerRequests {
         offeredOutgoingResources: ResourceCardSet,
         desiredIncomingResources: ResourceCardSet
     ): [CanTakePlayerRequests, RequestResult] {
-        return [this, ["RefusedSameTurn", "still in initial settlement placement phase "]];
+        return [this, ["RefusedSameTurn", "still in initial settlement placement phase"]];
+    }
+
+    buildRoad(
+        requestingPlayer: AuthenticatedPlayer,
+        rowIndexFromZeroInBoard: number,
+        hexIndexFromZeroInRow: number,
+        roadEdge: HexToHexDirection
+    ): [CanTakePlayerRequests, RequestResult] {
+        return [this, ["RefusedSameTurn", "still in initial settlement placement phase"]];
+    }
+
+    buildSettlement(
+        requestingPlayer: AuthenticatedPlayer,
+        rowIndexFromZeroInBoard: number,
+        hexIndexFromZeroInRow: number,
+        settlementCorner: HexCornerDirection
+    ): [CanTakePlayerRequests, RequestResult] {
+        return [this, ["RefusedSameTurn", "still in initial settlement placement phase"]];
     }
 
     private constructor(

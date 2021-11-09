@@ -1,5 +1,6 @@
 import { HexCornerDirection, HexToHexDirection } from "../board/hex";
 import { MutableHex } from "../board/MutableHex";
+import { RoadPiece, SettlementPiece } from "../board/piece";
 import { SixSidedDieScore } from "../die/die";
 import { ResourceCardSet, RobberActivationScore } from "../resource/resource";
 import { AuthenticatedPlayer } from "../player/player";
@@ -100,6 +101,88 @@ export class InNormalTurns implements CanTakePlayerRequests {
         return [this, ["SuccessfulSameTurn", successMessage]];
     }
 
+    buildRoad(
+        requestingPlayer: AuthenticatedPlayer,
+        rowIndexFromZeroInBoard: number,
+        hexIndexFromZeroInRow: number,
+        roadEdge: HexToHexDirection
+    ): [CanTakePlayerRequests, RequestResult] {
+        if (requestingPlayer != this.getActivePlayer()) {
+            const refusalMessage =
+                `${requestingPlayer.playerName} is not the active player,`
+                + ` ${this.getActivePlayer()?.playerName} is`;
+            return [this, ["RefusedSameTurn", refusalMessage]];
+        }
+
+        const roadCost = new ResourceCardSet(1n, 1n, 0n, 0n, 0n);
+        if (!requestingPlayer.canAfford(roadCost)) {
+            const refusalMessage =
+                `${requestingPlayer.playerName} does not have`
+                + ` the required resource cost ${roadCost.asArray()}`;
+            return [this, ["RefusedSameTurn", refusalMessage]];
+        }
+
+        const chosenRow = this.internalState.hexBoard.changeBoard()[rowIndexFromZeroInBoard];
+        if (chosenRow == undefined) {
+            const refusalMessage =
+                `Row ${rowIndexFromZeroInBoard} is not a valid row index,`
+                + ` the range is 0 to ${this.internalState.hexBoard.changeBoard().length - 1}`;
+            return [this, ["RefusedSameTurn", refusalMessage]];
+        }
+
+        const chosenHex = chosenRow[hexIndexFromZeroInRow];
+        if (chosenHex == undefined) {
+            const refusalMessage =
+                `Hex ${hexIndexFromZeroInRow} is not a valid hex index,`
+                + ` the range is 0 to ${chosenRow.length - 1}`;
+            return [this, ["RefusedSameTurn", refusalMessage]];
+        }
+
+        const [isPlaced, refusalMessage] =
+            chosenHex.acceptRoad(
+                new RoadPiece(requestingPlayer),
+                roadEdge
+            );
+
+        if (!isPlaced) {
+            return [this, ["RefusedSameTurn", refusalMessage]];
+        }
+
+        requestingPlayer.acceptResourceSet(roadCost.asCost());
+        this.internalState.cardBank.absorbSpentCardSet(roadCost);
+
+        let successMessage =
+            `Player ${requestingPlayer.playerName} placed`
+            + ` a road on edge ${roadEdge}`
+            + ` of hex ${rowIndexFromZeroInBoard}-${hexIndexFromZeroInRow}`;
+
+        const playerWithLongestRoadChanged = this.recalculateLongestRoad();
+
+        if (playerWithLongestRoadChanged) {
+            successMessage += this.getLongestRoadOwnerText();
+        }
+
+        const winningPlayer = this.getWinningPlayer();
+        if (winningPlayer == undefined) {
+            this.internalState.lastSuccessfulRequestResult =
+                ["SuccessfulSameTurn", successMessage];
+            return [this, this.internalState.lastSuccessfulRequestResult];
+        }
+
+        this.internalState.lastSuccessfulRequestResult = ["SuccessfulNewTurn", successMessage];
+        const nextRound = AfterVictory.createAfterVictory(this.internalState, winningPlayer);
+        return [nextRound, this.internalState.lastSuccessfulRequestResult];
+    }
+
+    buildSettlement(
+        requestingPlayer: AuthenticatedPlayer,
+        rowIndexFromZeroInBoard: number,
+        hexIndexFromZeroInRow: number,
+        settlementCorner: HexCornerDirection
+    ): [CanTakePlayerRequests, RequestResult] {
+        return [this, ["RefusedSameTurn", "not yet implemented"]];
+    }
+
     private constructor(private internalState: InternalState) {
         this.internalState.gamePhase = "NormalTurns";
         this.numberOfPlayers = this.internalState.playersInTurnOrder.length;
@@ -150,6 +233,25 @@ export class InNormalTurns implements CanTakePlayerRequests {
         }
 
         return [firstRoll, secondRoll];
+    }
+
+    private recalculateLongestRoad(): boolean {
+        // Maybe some day I will implement this.
+        return false;
+    }
+
+    private getLongestRoadOwnerText(): string {
+        return "nobody (not implemented)";
+    }
+
+    private getWinningPlayer(): AuthenticatedPlayer | undefined {
+        for (const gamePlayer of this.internalState.playersInTurnOrder) {
+            if (gamePlayer.getVictoryPointScore() >= 10n) {
+                return gamePlayer;
+            }
+        }
+
+        return undefined;
     }
 
     private readonly numberOfPlayers: number;

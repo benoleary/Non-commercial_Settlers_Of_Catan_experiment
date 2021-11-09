@@ -14,6 +14,14 @@ import { AuthenticatedPlayer } from"./AuthenticatedPlayer";
  * in the finite-amount-of-resources implementation).
  */
 export class CardBank {
+    absorbSpentCards(resourceType: ResourceType, cardCount: bigint): void {
+        // I'm not going to implement a finite card bank.
+    }
+
+    absorbSpentCardSet(resourceCardSet: ResourceCardSet): void {
+        // I'm not going to implement a finite card bank.
+    }
+
     makeMaritimeTrade(
         requestingPlayer: AuthenticatedPlayer,
         offeredOutgoingResources: ResourceCardSet,
@@ -54,10 +62,6 @@ export class CardBank {
     private getCount(resourceType: ResourceType): bigint {
         // I'm not going to implement a finite card bank.
         return 1n;
-    }
-
-    private absorbSpentCards(resourceType: ResourceType, cardCount: bigint): void {
-        // I'm not going to implement a finite card bank.
     }
 
     private giveOutCards(resourceType: ResourceType, cardCount: bigint): void {

@@ -25,4 +25,18 @@ export interface CanTakePlayerRequests {
         offeredOutgoingResources: ResourceCardSet,
         desiredIncomingResources: ResourceCardSet
     ): [CanTakePlayerRequests, RequestResult]
+
+    buildRoad(
+        requestingPlayer: AuthenticatedPlayer,
+        rowIndexFromZeroInBoard: number,
+        hexIndexFromZeroInRow: number,
+        roadEdge: HexToHexDirection
+    ): [CanTakePlayerRequests, RequestResult]
+
+    buildSettlement(
+        requestingPlayer: AuthenticatedPlayer,
+        rowIndexFromZeroInBoard: number,
+        hexIndexFromZeroInRow: number,
+        settlementCorner: HexCornerDirection
+    ): [CanTakePlayerRequests, RequestResult]
 }

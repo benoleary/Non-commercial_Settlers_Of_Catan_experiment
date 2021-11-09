@@ -1,5 +1,6 @@
 import { Game } from "../game/Game";
 import { RequestResult } from "../game/state/ReadableState";
+import { HexSelector } from "./HexSelector";
 import { ResourceCardSet } from "../game/resource/resource";
 import { CommandParser, INVALID_INPUT_EFFECT } from "./CommandParser";
 
@@ -26,9 +27,14 @@ export class NormalTurnsCommandParser implements CommandParser {
             "   -- b for brick, l for lumber, o for ore, g for grain, w for wool",
             "   - e.g. \"2 trade p1 give bll get gw\" for p2 to give 1 brick and 2 lumber to p1",
             "     in exchange for p1 giving p2 1 grain and 1 wool if p1 accepts",
+            "     (trading between players has not been implemented)",
             `   - \"${portName}\" always accepts 4 of 1 type for 1 of another`,
             "     (there is no requirement to have a settlement on the coast for 4-for-1,",
-            "     while generic 3-for-1 or specific 2-for-1 ports have not been implemented)"
+            "     while generic 3-for-1 or specific 2-for-1 ports have not been implemented)",
+            "3) \"P road X Y Z\" to buy and place a road on row X, hex Y, edge Z",
+            "   - e.g. \"3 road B 1 E\" to buy and place a road on the eastern edge of the",
+            "     westernmost hex of row B",
+            "   - a road costs bl (1 brick + 1 lumber)"
         ].join("\n");
     }
 
@@ -48,6 +54,10 @@ export class NormalTurnsCommandParser implements CommandParser {
 
         if (actionWord == "TRADE") {
             return this.performTrade(playerIdentifier, requestWords);
+        }
+
+        if (actionWord == "ROAD") {
+            return this.buildRoad(playerIdentifier, requestWords);
         }
 
         return [
@@ -119,6 +129,48 @@ export class NormalTurnsCommandParser implements CommandParser {
             + ` (valid: ${this.currentGame.playerNamesInTurnOrder},`
             + ` ${NormalTurnsCommandParser.PORT_NAME})`
         ];
+    }
+
+    private buildRoad(playerIdentifier: string, requestWords: string[]): RequestResult {
+        //"   - e.g. \"3 road B 1 E\" to buy and place a road on the eastern edge of the",
+        if (requestWords.length != 4) {
+            return [
+                "RefusedSameTurn",
+                "Required exactly 5 \"words\" in this order: player number, \"road\","
+                + " row letter (A/B/C/D/E), hex within row (1-5), edge of hex (NE/E/SE/SW/W/NW)"
+            ];
+        }
+
+        const [rowIndexInBoardFromZero, hexIndexInRowFromZero] =
+            HexSelector.convertToGridIndices(requestWords[1]!, requestWords[2]!);
+
+        if (rowIndexInBoardFromZero == undefined) {
+            return [
+                INVALID_INPUT_EFFECT,
+                `Could not understand ${requestWords[1]} as a valid row`
+            ];
+        }
+        if (hexIndexInRowFromZero == undefined) {
+            return [
+                INVALID_INPUT_EFFECT,
+                `Could not understand ${requestWords[2]} as a valid hex within the chosen row`
+            ];
+        }
+
+        const roadEdge = HexSelector.convertToHexToHex(requestWords[3]!);
+        if (roadEdge == undefined) {
+            return [
+                INVALID_INPUT_EFFECT,
+                `Could not understand ${requestWords[3]} as a valid edge of the chosen hex`
+            ];
+        }
+
+        return this.currentGame.buildRoad(
+                playerIdentifier,
+                rowIndexInBoardFromZero,
+                hexIndexInRowFromZero,
+                roadEdge
+            );
     }
 
     private parseTradeResources(

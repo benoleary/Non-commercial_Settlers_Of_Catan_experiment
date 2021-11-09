@@ -55,6 +55,24 @@ export class AfterVictory implements CanTakePlayerRequests {
         return [this, this.internalState.lastSuccessfulRequestResult!];
     }
 
+    buildRoad(
+        requestingPlayer: AuthenticatedPlayer,
+        rowIndexFromZeroInBoard: number,
+        hexIndexFromZeroInRow: number,
+        roadEdge: HexToHexDirection
+    ): [CanTakePlayerRequests, RequestResult] {
+        return [this, this.internalState.lastSuccessfulRequestResult!];
+    }
+
+    buildSettlement(
+        requestingPlayer: AuthenticatedPlayer,
+        rowIndexFromZeroInBoard: number,
+        hexIndexFromZeroInRow: number,
+        settlementCorner: HexCornerDirection
+    ): [CanTakePlayerRequests, RequestResult] {
+        return [this, this.internalState.lastSuccessfulRequestResult!];
+    }
+
     private constructor(
         private internalState: InternalState,
         private winningPlayer: AuthenticatedPlayer
