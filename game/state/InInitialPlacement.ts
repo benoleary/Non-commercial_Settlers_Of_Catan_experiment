@@ -2,9 +2,9 @@ import { HexBoard, HexCornerDirection, HexToHexDirection } from "../board/hex";
 import { RoadPiece, SettlementPiece } from "../board/piece";
 import { SixSidedDie } from "../die/die";
 import { ResourceType } from "../resource/resource";
-import { AuthenticatedPlayer } from "../player/player";
+import { AuthenticatedPlayer, PlayerColor } from "../player/player";
 import { ResourceCardSet } from "../resource/resource";
-import { PlayerNamesInTurnOrder, ReadableState, RequestResult } from "./ReadableState";
+import { PlayerNamesAndColorsInTurnOrder, ReadableState, RequestResult } from "./ReadableState";
 import { CanTakePlayerRequests } from "./CanTakePlayerRequests";
 import { InternalState } from "./InternalState";
 import { InNormalTurns } from "./InNormalTurns";
@@ -23,14 +23,17 @@ import { InNormalTurns } from "./InNormalTurns";
  */
 export class InInitialPlacement implements CanTakePlayerRequests {
     static createInInitialPlacement(
-        playerNamesInTurnOrder: PlayerNamesInTurnOrder,
+        playerNamesAndColorsInTurnOrder: PlayerNamesAndColorsInTurnOrder,
         hexBoard: HexBoard,
         sixSidedDie: SixSidedDie
     ): CanTakePlayerRequests {
         const initialState = new InternalState(
             hexBoard,
             sixSidedDie,
-            playerNamesInTurnOrder.map(playerName => new AuthenticatedPlayer(playerName)),
+            playerNamesAndColorsInTurnOrder.map(
+                playerNameAndColor =>
+                    new AuthenticatedPlayer(playerNameAndColor[0], playerNameAndColor[1])
+            ),
             "InitialPlacement"
         );
         initialState.lastSuccessfulRequestResult = [
@@ -100,11 +103,15 @@ export class InInitialPlacement implements CanTakePlayerRequests {
             ? (hexResource: ResourceType) => requestingPlayer.acceptResource(hexResource, 1n)
             : undefined;
 
+        const pieceColor = requestingPlayer.playerColor;
         const [isPlaced, refusalMessage] =
             chosenHex.acceptInitialSettlementAndRoad(
-                new SettlementPiece(requestingPlayer, "village"),
+                new SettlementPiece(
+                    pieceColor,
+                    requestingPlayer.getCallbackOnSettlementResourcePropagation()
+                ),
                 settlementCorner,
-                new RoadPiece(requestingPlayer),
+                new RoadPiece(pieceColor),
                 roadEdge,
                 giveResourceFromHexToPlayer
             );

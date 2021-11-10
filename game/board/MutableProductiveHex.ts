@@ -42,7 +42,6 @@ export abstract class MutableProductiveHex extends MutableHex {
     private callbackFunctions: CallbackOnResourceProduction[]
 }
 
-
 export class DesertHex extends MutableHex {
     get landType(): LandType { return "desert"; }
     get producedResource(): undefined { return undefined; }

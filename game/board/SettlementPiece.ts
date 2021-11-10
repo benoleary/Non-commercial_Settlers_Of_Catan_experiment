@@ -1,7 +1,9 @@
-import { AuthenticatedPlayer } from "../player/player"
+import { PlayerColor } from "../player/player"
 import { ResourceType } from "../resource/resource";
 
 export type SettlementType = "village" | "city";
+export type CallbackOnResourcePropagation =
+    (resourceType: ResourceType, numberOfCards: bigint) => void;
 
 /**
  * This class does the job of representing a settlement owned by a player, and signalling if it is
@@ -10,20 +12,25 @@ export type SettlementType = "village" | "city";
  */
 export class SettlementPiece {
     constructor(
-        public readonly owningPlayer: AuthenticatedPlayer,
-        private settlementType: SettlementType
-    ) { }
+        public readonly owningColor: PlayerColor,
+        private acceptPropagatedResource: CallbackOnResourcePropagation
+    ) {
+        // Settlements are always placed as villages, and later upgraded to cities.
+        this.settlementType = "village";
+    }
 
     getType() {
         return this.settlementType;
     }
 
     getCallbackOnNormalTurnProduction(): (producedResource: ResourceType) => void {
-        return this.propagateResourceToPlayer.bind(this);
+        return this.propagateResource.bind(this);
     }
 
-    propagateResourceToPlayer(producedResource: ResourceType): void {
-        const numberOfCards = this.getType() == "city" ? 2n : 1n;
-        this.owningPlayer.acceptResource(producedResource, numberOfCards);
+    propagateResource(producedResource: ResourceType): void {
+        const numberOfCards = (this.getType() == "city") ? 2n : 1n;
+        this.acceptPropagatedResource(producedResource, numberOfCards);
     }
+
+    private settlementType: SettlementType;
 }

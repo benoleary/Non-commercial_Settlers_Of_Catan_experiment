@@ -8,7 +8,7 @@ export class InitialPlacementCommandParser implements CommandParser {
 
     getHelpText(): string {
         const possiblePlayerNumbers =
-            `1/2/3${this.currentGame.playerNamesInTurnOrder.length > 3 ? "/4" : ""}`;
+            `1/2/3${this.currentGame.playerNamesAndColorsInTurnOrder.length > 3 ? "/4" : ""}`;
 
         return [
             "Initial settlement placement phase.",

@@ -1,4 +1,5 @@
-import { RoadPiece } from "./RoadPiece"
-import { SettlementPiece, SettlementType } from "./SettlementPiece";
+import { RoadPiece } from "./RoadPiece";
+import { CallbackOnResourcePropagation, SettlementPiece, SettlementType } from "./SettlementPiece";
+import { PieceFactory } from "./PieceFactory";
 
-export { RoadPiece, SettlementPiece, SettlementType };
+export { CallbackOnResourcePropagation, PieceFactory, RoadPiece, SettlementPiece, SettlementType };

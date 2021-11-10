@@ -143,7 +143,7 @@ class TextHex {
             pureWesternRoad,
             northWesternRoad
         ] = TextHex.VALID_HEX_TO_HEX_DIRECTIONS.map(
-            roadEdge => wideCharacterProvider.getFor(gameHex.getRoadOwner(roadEdge)?.playerName)
+            roadEdge => wideCharacterProvider.getFor(gameHex.getRoadColor(roadEdge))
         );
 
         const [
@@ -155,13 +155,13 @@ class TextHex {
             northWesternSettlement
         ] = TextHex.VALID_CORNER_DIRECTIONS.map(
             settlementCorner => {
-                const ownerAndType = gameHex.getSettlementOwnerAndType(settlementCorner);
-                if (ownerAndType == undefined) {
+                const colorAndType = gameHex.getSettlementColorAndType(settlementCorner);
+                if (colorAndType == undefined) {
                     return [doubleBlankWide, doubleBlankWide];
                 }
 
-                const playerWideCharacter = ownerAndType[0].playerName;
-                const settlementWideCharacter = wideCharacterProvider.getFor(ownerAndType[1]);
+                const playerWideCharacter = wideCharacterProvider.getFor(colorAndType[0]);
+                const settlementWideCharacter = wideCharacterProvider.getFor(colorAndType[1]);
                 return [
                     playerWideCharacter + settlementWideCharacter,
                     settlementWideCharacter + playerWideCharacter

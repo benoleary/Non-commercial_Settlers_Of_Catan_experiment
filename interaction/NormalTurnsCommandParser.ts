@@ -4,13 +4,16 @@ import { HexSelector } from "./HexSelector";
 import { ResourceCardSet } from "../game/resource/resource";
 import { CommandParser, INVALID_INPUT_EFFECT } from "./CommandParser";
 
+type FunctionOfValidHexIndices =
+    (rowIndexInBoardFromZero: number, hexIndexInRowFromZero: number) => RequestResult;
+
 export class NormalTurnsCommandParser implements CommandParser {
     constructor(private currentGame: Game) { }
 
     getHelpText(): string {
         const possiblePlayerNumbers =
-            `1/2/3${this.currentGame.playerNamesInTurnOrder.length > 3 ? "/4" : ""}`;
-        const possiblePlayerNames = this.currentGame.playerNamesInTurnOrder.join("/");
+            `1/2/3${this.currentGame.playerNamesAndColorsInTurnOrder.length > 3 ? "/4" : ""}`;
+        const possiblePlayerNames = this.currentGame.playerNamesAndColorsInTurnOrder.join("/");
 
         // This is just for compactness.
         const portName = NormalTurnsCommandParser.PORT_NAME;
@@ -34,7 +37,11 @@ export class NormalTurnsCommandParser implements CommandParser {
             "3) \"P road X Y Z\" to buy and place a road on row X, hex Y, edge Z",
             "   - e.g. \"3 road B 1 E\" to buy and place a road on the eastern edge of the",
             "     westernmost hex of row B",
-            "   - a road costs bl (1 brick + 1 lumber)"
+            "   - placing a road costs bl (1 brick + 1 lumber)",
+            "4) \"P village X Y Z\" to buy and place a settlement on row X, hex Y, corner Z",
+            "   - e.g. \"2 village B 4 N\" to buy and place a settlement on the northern corner",
+            "     of the easternmost hex of row B",
+            "   - placing a settlement costs blgw (1 brick + 1 lumber + 1 grain + 1 wool)"
         ].join("\n");
     }
 
@@ -58,6 +65,10 @@ export class NormalTurnsCommandParser implements CommandParser {
 
         if (actionWord == "ROAD") {
             return this.buildRoad(playerIdentifier, requestWords);
+        }
+
+        if (actionWord == "VILLAGE") {
+            return this.buildSettlement(playerIdentifier, requestWords);
         }
 
         return [
@@ -95,7 +106,7 @@ export class NormalTurnsCommandParser implements CommandParser {
             return [
                 INVALID_INPUT_EFFECT,
                 `Could not understand ${tradeTarget} as a valid trade partner`
-                + ` (valid: ${this.currentGame.playerNamesInTurnOrder},`
+                + ` (valid: ${this.currentGame.playerNamesAndColorsInTurnOrder},`
                 + ` ${NormalTurnsCommandParser.PORT_NAME})`
             ];
         }
@@ -107,8 +118,8 @@ export class NormalTurnsCommandParser implements CommandParser {
             ];
         }
 
-        if (this.currentGame.playerNamesInTurnOrder.map(
-            playerName => playerName.toUpperCase()).includes(tradeTarget)) {
+        if (this.currentGame.playerNamesAndColorsInTurnOrder.map(
+            playerNameAndColor => playerNameAndColor[0].toUpperCase()).includes(tradeTarget)) {
             return [
                 INVALID_INPUT_EFFECT,
                 "Sorry, trading with other players is not yet implemented"
@@ -126,18 +137,22 @@ export class NormalTurnsCommandParser implements CommandParser {
         return [
             INVALID_INPUT_EFFECT,
             `Could not understand ${tradeTarget} as a valid trade partner`
-            + ` (valid: ${this.currentGame.playerNamesInTurnOrder},`
+            + ` (valid: ${this.currentGame.playerNamesAndColorsInTurnOrder},`
             + ` ${NormalTurnsCommandParser.PORT_NAME})`
         ];
     }
 
-    private buildRoad(playerIdentifier: string, requestWords: string[]): RequestResult {
-        //"   - e.g. \"3 road B 1 E\" to buy and place a road on the eastern edge of the",
+    private buildPiece(
+        requestWords: string[],
+        pieceDisplayName: string,
+        lastParameterText: string,
+        functionOfValidHexIndices: FunctionOfValidHexIndices
+    ): RequestResult {
         if (requestWords.length != 4) {
             return [
                 "RefusedSameTurn",
-                "Required exactly 5 \"words\" in this order: player number, \"road\","
-                + " row letter (A/B/C/D/E), hex within row (1-5), edge of hex (NE/E/SE/SW/W/NW)"
+                `Required exactly 5 \"words\" in this order: player number, \"${pieceDisplayName}\",`
+                + ` row letter (A/B/C/D/E), hex within row (1-5), ${lastParameterText}`
             ];
         }
 
@@ -150,6 +165,7 @@ export class NormalTurnsCommandParser implements CommandParser {
                 `Could not understand ${requestWords[1]} as a valid row`
             ];
         }
+
         if (hexIndexInRowFromZero == undefined) {
             return [
                 INVALID_INPUT_EFFECT,
@@ -157,20 +173,58 @@ export class NormalTurnsCommandParser implements CommandParser {
             ];
         }
 
-        const roadEdge = HexSelector.convertToHexToHex(requestWords[3]!);
-        if (roadEdge == undefined) {
-            return [
-                INVALID_INPUT_EFFECT,
-                `Could not understand ${requestWords[3]} as a valid edge of the chosen hex`
-            ];
-        }
+        return functionOfValidHexIndices(
+            rowIndexInBoardFromZero,
+            hexIndexInRowFromZero
+        );
+    }
 
-        return this.currentGame.buildRoad(
-                playerIdentifier,
-                rowIndexInBoardFromZero,
-                hexIndexInRowFromZero,
-                roadEdge
-            );
+    private buildRoad(playerIdentifier: string, requestWords: string[]): RequestResult {
+        return this.buildPiece(
+            requestWords,
+            "road",
+            "edge of hex (NE/E/SE/SW/W/NW)",
+            (rowIndexInBoardFromZero: number, hexIndexInRowFromZero: number) => {
+                const roadEdge = HexSelector.convertToHexToHex(requestWords[3]!);
+                if (roadEdge == undefined) {
+                    return [
+                        INVALID_INPUT_EFFECT,
+                        `Could not understand ${requestWords[3]} as a valid edge of the chosen hex`
+                    ];
+                }
+
+                return this.currentGame.buildRoad(
+                        playerIdentifier,
+                        rowIndexInBoardFromZero,
+                        hexIndexInRowFromZero,
+                        roadEdge
+                    );
+            }
+        );
+    }
+
+    private buildSettlement(playerIdentifier: string, requestWords: string[]): RequestResult {
+        return this.buildPiece(
+            requestWords,
+            "settlement",
+            "corner of hex (N/NE/SE/S/SW/NW)",
+            (rowIndexInBoardFromZero: number, hexIndexInRowFromZero: number) => {
+                const settlementCorner = HexSelector.convertToHexCorner(requestWords[3]!);
+                if (settlementCorner == undefined) {
+                    return [
+                        INVALID_INPUT_EFFECT,
+                        `Could not understand ${requestWords[3]} as a valid corner of the chosen hex`
+                    ];
+                }
+
+                return this.currentGame.buildSettlement(
+                        playerIdentifier,
+                        rowIndexInBoardFromZero,
+                        hexIndexInRowFromZero,
+                        settlementCorner
+                    );
+            }
+        );
     }
 
     private parseTradeResources(

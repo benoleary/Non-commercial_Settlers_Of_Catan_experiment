@@ -5,16 +5,16 @@ export class EmojiProvider implements WideCharacterProvider {
     // single or double width. Hence some of these have spaces and others not.
     // It might look buggy on your machine.
     getFor(inputType: string | undefined): string {
-        if (inputType == "p1") {
+        if (inputType == "red") {
             return "🛑";
         }
-        if (inputType == "p2") {
+        if (inputType == "blue") {
             return "🔵";
         }
-        if (inputType == "p3") {
+        if (inputType == "green") {
             return "💚";
         }
-        if (inputType == "p4") {
+        if (inputType == "yellow") {
             return "🔶";
         }
         if (inputType == "village") {

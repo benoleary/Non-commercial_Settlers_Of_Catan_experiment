@@ -2,17 +2,17 @@ import { WideCharacterProvider } from "./WideCharacterProvider";
 
 export class AsciiProvider implements WideCharacterProvider {
     getFor(inputType: string | undefined): string {
-        if (inputType == "p1") {
-            return "p1";
+        if (inputType == "red") {
+            return "rd";
         }
-        if (inputType == "p2") {
-            return "p2";
+        if (inputType == "blue") {
+            return "bl";
         }
-        if (inputType == "p3") {
-            return "p3";
+        if (inputType == "green") {
+            return "gn";
         }
-        if (inputType == "p4") {
-            return "p4";
+        if (inputType == "yellow") {
+            return "yw";
         }
         if (inputType == "village") {
             return "VV";

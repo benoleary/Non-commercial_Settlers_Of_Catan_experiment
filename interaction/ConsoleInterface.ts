@@ -1,4 +1,4 @@
-import { PlayerNamesInTurnOrder, Game } from "../game/Game";
+import { PlayerNamesAndColorsInTurnOrder, Game } from "../game/Game";
 import { BoardVisualization, PlayerVisualization } from "../visualization/visualization";
 import { CommandParser } from "./CommandParser";
 import promptSync from 'prompt-sync';
@@ -11,7 +11,7 @@ export class ConsoleInterface {
 
     constructor(
         private consolePrompt: promptSync.Prompt,
-        private playerNamesInTurnOrder: PlayerNamesInTurnOrder,
+        private playerNamesInTurnOrder: string[],
         private playerVisualization: PlayerVisualization,
         private currentGame: Game,
         private boardVisualization: BoardVisualization,

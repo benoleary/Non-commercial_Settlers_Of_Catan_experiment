@@ -1,4 +1,8 @@
 import { ResourceCardSet, ResourceType } from "../resource/resource";
+import { CallbackOnResourcePropagation, PieceFactory, RoadPiece, SettlementPiece }
+    from "../board/piece";
+import { PlayerColor } from "./PlayerColor";
+import { PiecePool } from "./PiecePool";
 
 /**
  * This class represents a player within the game state, relying on other systems to have
@@ -6,10 +10,34 @@ import { ResourceCardSet, ResourceType } from "../resource/resource";
  * resource cards, possibly some set aside as offered as trades, and a number of victory points.
  */
 export class AuthenticatedPlayer {
-    constructor(public readonly playerName: string) {
+    constructor(public readonly playerName: string, public readonly playerColor: PlayerColor) {
         this.fullyOwnedResources = ResourceCardSet.createEmpty();
         this.offeredTrades = new Map<AuthenticatedPlayer, ResourceCardSet>();
-        this.victoryPoints = 0n;
+
+        // Technically the players start with 0 but there is no way to avoid placing both initial
+        // settlements and gaining a victory point for each.
+        this.victoryPoints = 2n;
+
+        const incrementVictoryPoints = this.acceptSingleVictoryPoint.bind(this);
+        this.piecePool =
+            new PiecePool(
+                this.playerColor,
+                incrementVictoryPoints,
+                this.getCallbackOnSettlementResourcePropagation(),
+                incrementVictoryPoints
+            );
+    }
+
+    getCallbackOnSettlementResourcePropagation(): CallbackOnResourcePropagation {
+        return this.acceptResource.bind(this);
+    }
+
+    getRoadFactory(): PieceFactory<RoadPiece> {
+        return this.piecePool.getRoadFactory();
+    }
+
+    getVillageFactory(): PieceFactory<SettlementPiece> {
+        return this.piecePool.getVillageFactory();
     }
 
     getVictoryPointScore(): bigint {
@@ -51,7 +79,16 @@ export class AuthenticatedPlayer {
         return false;
     }
 
-    private fullyOwnedResources: ResourceCardSet;
-    private offeredTrades: Map<AuthenticatedPlayer, ResourceCardSet>;
+    acceptVictoryPointChange(changeInPoints: bigint): void {
+        this.victoryPoints += changeInPoints;
+    }
+
+    acceptSingleVictoryPoint(): void {
+        this.acceptVictoryPointChange(1n);
+    }
+
+    private readonly piecePool: PiecePool;
+    private readonly fullyOwnedResources: ResourceCardSet;
+    private readonly offeredTrades: Map<AuthenticatedPlayer, ResourceCardSet>;
     private victoryPoints: bigint;
 }

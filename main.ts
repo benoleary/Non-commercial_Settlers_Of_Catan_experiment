@@ -1,5 +1,5 @@
 import { HexBoard } from "./game/board/hex"
-import { Game, PlayerNamesInTurnOrder } from "./game/Game"
+import { Game, PlayerNamesAndColorsInTurnOrder} from "./game/Game"
 import { FlatRandomOneToSix } from "./game/die/die"
 import { BoardVisualization, PlayerVisualization } from "./visualization/visualization"
 import { ConsoleInterface } from "./interaction/console"
@@ -39,12 +39,16 @@ if (playerNumberArguments.length < 1) {
     process.exit();
 }
 
-const playerNamesInTurnOrder: PlayerNamesInTurnOrder =
+const playerNamesAndColorsInTurnOrder: PlayerNamesAndColorsInTurnOrder =
     playerNumberArguments[0] == fourPlayersArgument
-    ? ["p1", "p2", "p3", "p4"]
-    : ["p1", "p2", "p3"];
+    ? [["p1", "red"], ["p2", "blue"], ["p3", "green"], ["p4", "yellow"]]
+    : [["p1", "red"], ["p2", "blue"], ["p3", "green"]];
 let exampleGame =
-    new Game(playerNamesInTurnOrder, HexBoard.getFullyRandomBoard(), new FlatRandomOneToSix());
+    new Game(
+        playerNamesAndColorsInTurnOrder,
+        HexBoard.getFullyRandomBoard(),
+        new FlatRandomOneToSix()
+    );
 const hasEmojiArgument = process.argv.includes(emojiArgument)
 let playerVisualization = new PlayerVisualization(hasEmojiArgument);
 let boardVisualization = new BoardVisualization(hasEmojiArgument);
@@ -53,7 +57,7 @@ let boardVisualization = new BoardVisualization(hasEmojiArgument);
 const consoleInterface =
     new ConsoleInterface(
         promptSync(),
-        playerNamesInTurnOrder,
+        playerNamesAndColorsInTurnOrder.map(playerNameAndColor => playerNameAndColor[0]),
         playerVisualization,
         exampleGame,
         boardVisualization,

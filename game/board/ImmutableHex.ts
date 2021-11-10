@@ -1,4 +1,4 @@
-import { AuthenticatedPlayer } from "../player/player";
+import { PlayerColor } from "../player/player";
 import { ProductionRollScore, ResourceType } from "../resource/resource";
 import { SettlementType } from "./piece";
 
@@ -25,20 +25,20 @@ export abstract class ImmutableHex {
     }
 
     /**
-     * Since roads never change and have only one characteristic, it suffices to basically declare
-     * which player (if any) "owns" the edge of a hex.
+     * Since roads never change and have only one characteristic, it suffices to basically show the
+     * color of which player (if any) "owns" the edge of a hex.
      */
-    abstract getRoadOwner(roadEdge: HexToHexDirection): AuthenticatedPlayer | undefined
+    abstract getRoadColor(roadEdge: HexToHexDirection): PlayerColor | undefined
 
     /**
      * The mechanics of how much a settlement produces is determined inside the SettlementPiece
      * class, but similarly to the road case, since they only ever have 2 states, it is sufficient
-     * for reading purposes to return which player owns the settlement (if any) on the corner, and
-     * whetehr it is a city or not.
+     * for reading purposes to return the color of which player owns the settlement (if any) on the
+     * corner, and whether it is a city or not.
      */
-    abstract getSettlementOwnerAndType(
+    abstract getSettlementColorAndType(
         settlementCorner: HexCornerDirection
-    ): [AuthenticatedPlayer, SettlementType] | undefined
+    ): [PlayerColor, SettlementType] | undefined
 
     protected constructor(
         public readonly productionRollScore: ProductionRollScore | undefined,

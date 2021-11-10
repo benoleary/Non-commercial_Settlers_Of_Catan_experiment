@@ -3,21 +3,21 @@ import { HexBoard, HexCornerDirection, HexMatrix, HexToHexDirection, ImmutableHe
 import { SixSidedDie } from "./die/die"
 import { AuthenticatedPlayer } from "./player/player";
 import { ResourceCardSet } from "./resource/resource";
-import { GamePhase, PlayerNamesInTurnOrder, RequestResult } from "./state/ReadableState";
+import { GamePhase, PlayerNamesAndColorsInTurnOrder, RequestResult } from "./state/ReadableState";
 import { CanTakePlayerRequests} from "./state/CanTakePlayerRequests";
 import { InInitialPlacement } from "./state/InInitialPlacement";
 
-export { PlayerNamesInTurnOrder }
+export { PlayerNamesAndColorsInTurnOrder }
 
 export class Game {
     constructor(
-        public readonly playerNamesInTurnOrder: PlayerNamesInTurnOrder,
+        public readonly playerNamesAndColorsInTurnOrder: PlayerNamesAndColorsInTurnOrder,
         hexBoard: HexBoard,
         sixSidedDie: SixSidedDie
     ) {
         this.internalState =
             InInitialPlacement.createInInitialPlacement(
-                playerNamesInTurnOrder,
+                playerNamesAndColorsInTurnOrder,
                 hexBoard,
                 sixSidedDie
             );
