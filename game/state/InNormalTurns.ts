@@ -43,7 +43,6 @@ export class InNormalTurns implements CanTakePlayerRequests {
         return [this, ["RefusedSameTurn", "initial settlement placement phase is over"]];
     }
 
-
     beginNextNormalTurn(
         requestingPlayer: AuthenticatedPlayer
     ): [CanTakePlayerRequests, RequestResult] {
@@ -55,6 +54,19 @@ export class InNormalTurns implements CanTakePlayerRequests {
         }
 
         this.activePlayerIndex = (this.activePlayerIndex + 1) % this.numberOfPlayers;
+
+        // It is possible (through another player breaking someone else having longest road) for
+        // a player to begin the turn with enough victory points to win.
+        if (this.isNowWonByActivePlayer()) {
+            this.internalState.lastSuccessfulRequestResult = [
+                "SuccessfulNewTurn",
+                `Player ${requestingPlayer.playerName} passed the turn`
+                + ` to player ${this.getActivePlayer()!.playerName} who has now won`];
+            const nextRound =
+                AfterVictory.createAfterVictory(this.internalState, this.getActivePlayer()!);
+            return [nextRound, this.internalState.lastSuccessfulRequestResult];
+        }
+
         const diceRollScore = this.beginTurn();
         this.internalState.lastSuccessfulRequestResult = [
             "SuccessfulNewTurn",
@@ -62,6 +74,7 @@ export class InNormalTurns implements CanTakePlayerRequests {
             + ` to player ${this.getActivePlayer()?.playerName} who rolled`
             + ` ${diceRollScore[0]} + ${diceRollScore[1]} = ${diceRollScore[0] + diceRollScore[1]}`
         ];
+
         return [this, this.internalState.lastSuccessfulRequestResult];
     }
 
@@ -125,16 +138,11 @@ export class InNormalTurns implements CanTakePlayerRequests {
                     return [this, ["RefusedSameTurn", refusalMessage]];
                 }
 
-                let successMessage =
+                const successMessage =
                     `Player ${activePlayer.playerName} placed`
                     + ` a road on edge ${roadEdge}`
-                    + ` of hex ${rowIndexFromZeroInBoard}-${hexIndexFromZeroInRow}`;
-
-                const playerWithLongestRoadChanged = this.recalculateLongestRoad();
-
-                if (playerWithLongestRoadChanged) {
-                    successMessage += this.getLongestRoadOwnerText();
-                }
+                    + ` of hex ${rowIndexFromZeroInBoard}-${hexIndexFromZeroInRow}`
+                    + this.recalculateLongestRoad();
 
                 return this.applyCostsAndCheckForVictory(
                     activePlayer,
@@ -168,10 +176,11 @@ export class InNormalTurns implements CanTakePlayerRequests {
                     return [this, ["RefusedSameTurn", refusalMessage]];
                 }
 
-                let successMessage =
+                const successMessage =
                     `Player ${activePlayer.playerName} placed`
                     + ` a village on corner ${settlementCorner}`
-                    + ` of hex ${rowIndexFromZeroInBoard}-${hexIndexFromZeroInRow}`;
+                    + ` of hex ${rowIndexFromZeroInBoard}-${hexIndexFromZeroInRow}`
+                    + this.recalculateLongestRoad();
 
                 return this.applyCostsAndCheckForVictory(
                     activePlayer,
@@ -274,23 +283,26 @@ export class InNormalTurns implements CanTakePlayerRequests {
         return functionOfActivePlayerAndValidHex(requestingPlayer, chosenHex);
     }
 
-    private recalculateLongestRoad(): boolean {
+    /**
+     * This re-calculates the longest road (since a new road could change it or a new settlement
+     * could break the current longset road) and returns an empty string if nothing has changed,
+     * or text declaring who now has the longest road if that did change.
+     *
+     * @returns Text about who now has the longest road if there has been a change, an empty
+     *          string otherwise
+     */
+    private recalculateLongestRoad(): string {
         // Maybe some day I will implement this.
-        return false;
+        // TODO: calculate and compare to previous owner.
+        // If changed:
+        // return this.getLongestRoadOwnerText();
+        return "";
     }
 
-    private getLongestRoadOwnerText(): string {
-        return "nobody (not implemented)";
-    }
-
-    private getVictoriousPlayer(): AuthenticatedPlayer | undefined {
-        for (const gamePlayer of this.internalState.playersInTurnOrder) {
-            if (gamePlayer.getVictoryPointScore() >= 10n) {
-                return gamePlayer;
-            }
-        }
-
-        return undefined;
+    // Only the active player can win on any turn.
+    private isNowWonByActivePlayer(): boolean {
+        const activePlayer = this.getActivePlayer();
+        return (activePlayer != undefined) && (activePlayer.getVictoryPointScore() >= 10n);
     }
 
     private applyCostsAndCheckForVictory(
@@ -301,16 +313,16 @@ export class InNormalTurns implements CanTakePlayerRequests {
         activePlayer.acceptResourceSet(pieceCost.asCost());
         this.internalState.cardBank.absorbSpentCardSet(pieceCost);
 
-        const victoriousPlayer = this.getVictoriousPlayer();
-        if (victoriousPlayer == undefined) {
-            this.internalState.lastSuccessfulRequestResult =
-                ["SuccessfulSameTurn", successMessage];
-            return [this, this.internalState.lastSuccessfulRequestResult];
+        if (this.isNowWonByActivePlayer()) {
+            this.internalState.lastSuccessfulRequestResult = ["SuccessfulNewTurn", successMessage];
+            const nextRound =
+                AfterVictory.createAfterVictory(this.internalState, this.getActivePlayer()!);
+            return [nextRound, this.internalState.lastSuccessfulRequestResult];
         }
 
-        this.internalState.lastSuccessfulRequestResult = ["SuccessfulNewTurn", successMessage];
-        const nextRound = AfterVictory.createAfterVictory(this.internalState, victoriousPlayer);
-        return [nextRound, this.internalState.lastSuccessfulRequestResult];
+        this.internalState.lastSuccessfulRequestResult =
+            ["SuccessfulSameTurn", successMessage];
+        return [this, this.internalState.lastSuccessfulRequestResult];
     }
 
     private readonly numberOfPlayers: number;
