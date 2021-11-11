@@ -200,15 +200,9 @@ export abstract class MutableHex extends ImmutableHex {
 
         // The road leading to this edge which allows a road to be placed on it might only be on an
         // edge of the neighboring hex.
-        if (
-            !this.getEdgeSharing(placementEdge).some(
-                sharerWithEdge =>
-                    sharerWithEdge[0].hasRoadOfSameColorLeadingToEdge(
-                        roadFactory.pieceColor,
-                        sharerWithEdge[1]
-                    )
-                )
-        ) {
+        const isConnectedToSameColorRoad =
+            this.hasEdgeOrNeighborAllowingRoadOfColorOnEdge(roadFactory.pieceColor, placementEdge);
+        if (!isConnectedToSameColorRoad) {
             return [false, "No neighboring edge with road owned by same player"];
         }
 
@@ -243,14 +237,7 @@ export abstract class MutableHex extends ImmutableHex {
         settlementFactory: PieceFactory<SettlementPiece>,
         placementCorner: HexCornerDirection
     ): [boolean, string] {
-        if (
-            !ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringCorner(placementCorner).some(
-                hexEdge => this.hasRoadOfSameColor(
-                    settlementFactory.pieceColor,
-                    hexEdge
-                )
-            )
-        ) {
+        if (!this.hasRoadOfColorLeadingToCorner(settlementFactory.pieceColor, placementCorner)) {
             return [
                 false,
                 "no road owned by player leads to this corner"
@@ -262,18 +249,6 @@ export abstract class MutableHex extends ImmutableHex {
         if (MutableHex.haveOnlyEmptySharedCorners(cornerSharers)) {
             return [false, "too close to another settlement"];
         }
-
-        if (
-            cornerSharers.some(
-                cornerSharer => cornerSharer[0].hasBothRoadsToCornerOwnedByAnotherPlayer(
-                    settlementFactory.pieceColor,
-                    cornerSharer[1]
-                )
-            )
-        ) {
-            return [false, "cannot break the road of another player"];
-        }
-
 
         const settlementForPlacement = settlementFactory.createPiece();
         if (settlementForPlacement == undefined) {
@@ -293,59 +268,8 @@ export abstract class MutableHex extends ImmutableHex {
         ];
     }
 
-    hasRoad(roadEdge: HexToHexDirection): boolean {
-        // The edge betweeen two hexes is technically represented by two separate locations, which
-        // are considered to be the same place from the outside, but internally the edge on this
-        // hex has to be checked and also the corresponding edge on the other hex (if not
-        // undefined).
-        return this.getEdgeSharing(roadEdge).some(
-            sharerWithEdge => sharerWithEdge[0].hasAcceptedRoad(sharerWithEdge[1])
-        );
-    }
-
     hasAcceptedRoad(roadEdge: HexToHexDirection): boolean {
         return this.getAcceptedRoad(roadEdge) != undefined;
-    }
-
-    getAcceptedRoadColor(roadEdge: HexToHexDirection): PlayerColor | undefined {
-        return this.getAcceptedRoad(roadEdge)?.owningColor;
-    }
-
-    hasRoadOfSameColorLeadingToEdge(
-        pieceColor: PlayerColor,
-        placementEdge: HexToHexDirection
-    ): boolean {
-        return ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringEdge(placementEdge).some(
-            neighboringEdge => this.hasRoadOfSameColor(
-                pieceColor,
-                neighboringEdge
-            )
-        );
-    }
-
-    hasRoadOfSameColorLeadingToCorner(
-        pieceColor: PlayerColor,
-        placementCorner: HexCornerDirection
-    ): boolean {
-        return (
-            ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringCorner(placementCorner).some(
-                neighboringEdge => this.hasRoadOfSameColor(pieceColor, neighboringEdge)
-            )
-        );
-    }
-
-    hasBothRoadsToCornerOwnedByAnotherPlayer(
-        pieceColor: PlayerColor,
-        placementCorner: HexCornerDirection
-    ): boolean {
-        const roadColors =
-            ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringCorner(placementCorner)
-            .map(edgeToCorner => this.getRoadColor(edgeToCorner));
-        return (
-            (roadColors.length == 2)
-            && (roadColors[0] == roadColors[1])
-            && (roadColors[0] != pieceColor)
-        );
     }
 
     isEmptyCornerWithEmptyBothSides(placementCorner: HexCornerDirection): boolean {
@@ -358,6 +282,26 @@ export abstract class MutableHex extends ImmutableHex {
             (this.acceptedSettlements[clockwiseIndex] == undefined)
             && (this.acceptedSettlements[placementIndex] == undefined)
             && (this.acceptedSettlements[anticlockwiseIndex] == undefined)
+        );
+    }
+
+    hasEdgeAllowingRoadOfColorOnEdge(
+        pieceColor: PlayerColor,
+        placementEdge: HexToHexDirection
+    ): boolean {
+        return ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringEdge(placementEdge).some(
+            neighboringEdge => this.getRoadColor(neighboringEdge) == pieceColor
+        );
+    }
+
+    hasRoadOfColorLeadingToCorner(
+        pieceColor: PlayerColor,
+        settlementCorner: HexCornerDirection
+    ): boolean {
+        return (
+            ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringCorner(settlementCorner).some(
+                hexEdge => this.getRoadColor(hexEdge) == pieceColor
+            )
         );
     }
 
@@ -393,11 +337,14 @@ export abstract class MutableHex extends ImmutableHex {
         return this.acceptedRoads[ImmutableHex.edgeIndex(roadEdge)];
     }
 
-    protected hasRoadOfSameColor(
-        pieceColor: PlayerColor,
-        roadEdge: HexToHexDirection
-    ): boolean {
-        return (this.getRoadColor(roadEdge) == pieceColor);
+    protected hasRoad(roadEdge: HexToHexDirection): boolean {
+        // The edge betweeen two hexes is technically represented by two separate locations, which
+        // are considered to be the same place from the outside, but internally the edge on this
+        // hex has to be checked and also the corresponding edge on the other hex (if not
+        // undefined).
+        return this.getEdgeSharing(roadEdge).some(
+            sharerWithEdge => sharerWithEdge[0].hasAcceptedRoad(sharerWithEdge[1])
+        );
     }
 
     protected getAcceptedSettlement(
@@ -438,6 +385,71 @@ export abstract class MutableHex extends ImmutableHex {
         }
 
         return cornerSharers;
+    }
+
+    protected hasNeighborWithRoadOfColorLeadingToCorner(
+        pieceColor: PlayerColor,
+        edgeSharedWithNeighbor: HexToHexDirection,
+        cornerSharedWithNeighbor: HexCornerDirection
+    ): boolean {
+        const neighboringHex = this.getMutableNeighbor(edgeSharedWithNeighbor);
+        if (neighboringHex == undefined) {
+            return false;
+        }
+        const cornerForNeighbor =
+            ImmutableHex.getCloserCornerNeighboringOppositeEdge(
+                edgeSharedWithNeighbor,
+                cornerSharedWithNeighbor
+            );
+        return neighboringHex.hasRoadOfColorLeadingToCorner(pieceColor, cornerForNeighbor);
+    }
+
+    protected hasEdgeOrNeighborAllowingRoadOfColorOnEdge(
+        pieceColor: PlayerColor,
+        placementEdge: HexToHexDirection
+    ): boolean {
+        // If the edges of this hex allow this edge to get a road, that is sufficient.
+        if (this.hasEdgeAllowingRoadOfColorOnEdge(pieceColor, placementEdge)) {
+            return true;
+        }
+
+        // If this hex does not have a connecting road, then we check the connections on the hex
+        // which shares the edge.
+        const edgeSharer = this.getMutableNeighbor(placementEdge);
+
+        if (edgeSharer != undefined) {
+            return edgeSharer.hasEdgeAllowingRoadOfColorOnEdge(
+                pieceColor,
+                ImmutableHex.getOppositeEdge(placementEdge)
+            );
+        }
+
+        // If this hex does not have a connecting road and the edge is not shared with another hex
+        // (so it would be a road along a coast), then we have to check the neighbors on the
+        // corners of the target edge.
+        const [anticlockwiseEdge, clockwiseEdge] =
+            ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringEdge(placementEdge);
+        const [anticlockwiseCorner, clockwiseCorner] =
+            ImmutableHex.getAnticlockwiseAndClockwiseCornersNeighboringEdge(placementEdge);
+
+        // If the anticlockwise neighbor allows it, that is sufficient
+        const isAllowedByAnticlockwiseNeighbor =
+            this.hasNeighborWithRoadOfColorLeadingToCorner(
+                pieceColor,
+                anticlockwiseEdge,
+                anticlockwiseCorner
+            );
+        if (isAllowedByAnticlockwiseNeighbor) {
+            return true;
+        }
+
+        // At this point, whether or not the road is allowed is determined solely by the clockwise
+        // neighbor.
+        return this.hasNeighborWithRoadOfColorLeadingToCorner(
+            pieceColor,
+            clockwiseEdge,
+            clockwiseCorner
+        );
     }
 
     protected recordSettlementAndRegisterCallbacks(
