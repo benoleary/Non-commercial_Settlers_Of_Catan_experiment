@@ -132,9 +132,9 @@ export abstract class MutableHex extends ImmutableHex {
      *          explanation otherwise
      */
     acceptInitialSettlementAndRoad(
-        settlementForPlacement: SettlementPiece,
+        settlementFactory: PieceFactory<SettlementPiece>,
         settlementCorner: HexCornerDirection,
-        roadForPlacement: RoadPiece,
+        roadFactory: PieceFactory<RoadPiece>,
         roadEdge: HexToHexDirection,
         onPlacement: CallbackOnResourceProduction | undefined
     ): [boolean, string] {
@@ -156,7 +156,10 @@ export abstract class MutableHex extends ImmutableHex {
 
         // After it has been determined that both settlement and road have valid placements, the
         // hex can accept the pieces. The neighbors will treat these pieces as their own when
-        // viewed from outside the class.
+        // viewed from outside the class. There is no way that the factories could fail to produce
+        // pieces in the initial placement phase.
+        const roadForPlacement = roadFactory.createPiece()!;
+        const settlementForPlacement = settlementFactory.createPiece()!;
         this.recordSettlementAndRegisterCallbacks(
             settlementForPlacement,
             settlementCorner,

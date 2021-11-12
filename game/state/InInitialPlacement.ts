@@ -106,12 +106,9 @@ export class InInitialPlacement implements CanTakePlayerRequests {
         const pieceColor = requestingPlayer.playerColor;
         const [isPlaced, refusalMessage] =
             chosenHex.acceptInitialSettlementAndRoad(
-                new SettlementPiece(
-                    pieceColor,
-                    requestingPlayer.getCallbackOnSettlementResourcePropagation()
-                ),
+                requestingPlayer.getVillageFactory(),
                 settlementCorner,
-                new RoadPiece(pieceColor),
+                requestingPlayer.getRoadFactory(),
                 roadEdge,
                 giveResourceFromHexToPlayer
             );

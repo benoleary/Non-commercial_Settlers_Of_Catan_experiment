@@ -15,10 +15,8 @@ export class PiecePool {
         private callbackForSettlement: CallbackOnResourcePropagation,
         private callbackOnCityUpgrade: CallbackOnEvent
     ) {
-        // There would be 15 roads and 5 villages but 2 of each are used by the initial placement
-        // phase without notifying the PiecePool.
-        this.countOfRemainingRoadPieces = 13n;
-        this.countOfRemainingVillagePieces = 3n;
+        this.countOfRemainingRoadPieces = 15n;
+        this.countOfRemainingVillagePieces = 5n;
         this.countOfRemainingCityPieces = 4n;
      }
 

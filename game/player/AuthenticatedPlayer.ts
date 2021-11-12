@@ -13,10 +13,7 @@ export class AuthenticatedPlayer {
     constructor(public readonly playerName: string, public readonly playerColor: PlayerColor) {
         this.fullyOwnedResources = ResourceCardSet.createEmpty();
         this.offeredTrades = new Map<AuthenticatedPlayer, ResourceCardSet>();
-
-        // Technically the players start with 0 but there is no way to avoid placing both initial
-        // settlements and gaining a victory point for each.
-        this.victoryPoints = 2n;
+        this.victoryPoints = 0n;
 
         const incrementVictoryPoints = this.acceptSingleVictoryPoint.bind(this);
         this.piecePool =

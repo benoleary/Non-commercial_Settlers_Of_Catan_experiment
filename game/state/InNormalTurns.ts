@@ -1,6 +1,5 @@
 import { HexCornerDirection, HexToHexDirection } from "../board/hex";
 import { MutableHex } from "../board/MutableHex";
-import { RoadPiece, SettlementPiece } from "../board/piece";
 import { SixSidedDieScore } from "../die/die";
 import { ResourceCardSet, RobberActivationScore } from "../resource/resource";
 import { AuthenticatedPlayer } from "../player/player";
