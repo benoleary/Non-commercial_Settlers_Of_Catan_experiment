@@ -125,6 +125,24 @@ export class Game {
         );
     }
 
+    upgradeToCity(
+        requestingPlayerIdentifier: string,
+        rowIndexFromZeroInBoard: number,
+        hexIndexFromZeroInRow: number,
+        settlementCorner: HexCornerDirection
+    ): RequestResult {
+        return this.authenticateThenDelegate(
+            requestingPlayerIdentifier,
+            (requestingPlayer: AuthenticatedPlayer) =>
+                this.internalState.upgradeToCity(
+                    requestingPlayer,
+                    rowIndexFromZeroInBoard,
+                    hexIndexFromZeroInRow,
+                    settlementCorner
+                )
+        );
+    }
+
     private internalState: CanTakePlayerRequests
 
     private authenticateThenDelegate(

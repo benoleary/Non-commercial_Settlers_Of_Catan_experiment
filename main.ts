@@ -83,6 +83,8 @@ while(exampleGame.getPhase() == "NormalTurns") {
         consoleInterface.promptAndExecutePlayerRequest(normalTurnsCommandParser);
 
     if (!isFineToContinue) {
+        console.log(boardVisualization.asString(exampleGame.viewBoard()));
+        console.log(exampleGame.getLastSuccessfulRequestResult());
         process.exit();
     }
 }

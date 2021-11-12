@@ -73,6 +73,16 @@ export class AfterVictory implements CanTakePlayerRequests {
         return [this, this.internalState.lastSuccessfulRequestResult!];
     }
 
+    upgradeToCity(
+        requestingPlayer: AuthenticatedPlayer,
+        rowIndexFromZeroInBoard: number,
+        hexIndexFromZeroInRow: number,
+        settlementCorner: HexCornerDirection
+    ): [CanTakePlayerRequests, RequestResult] {
+        return [this, this.internalState.lastSuccessfulRequestResult!];
+    }
+
+
     private constructor(
         private internalState: InternalState,
         private winningPlayer: AuthenticatedPlayer

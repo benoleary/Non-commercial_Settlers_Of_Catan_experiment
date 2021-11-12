@@ -4,6 +4,7 @@ import { ResourceType } from "../resource/resource";
 export type SettlementType = "village" | "city";
 export type CallbackOnResourcePropagation =
     (resourceType: ResourceType, numberOfCards: bigint) => void;
+export type CallbackForCheck = () => boolean;
 
 /**
  * This class does the job of representing a settlement owned by a player, and signalling if it is
@@ -13,7 +14,8 @@ export type CallbackOnResourcePropagation =
 export class SettlementPiece {
     constructor(
         public readonly owningColor: PlayerColor,
-        private acceptPropagatedResource: CallbackOnResourcePropagation
+        private acceptPropagatedResource: CallbackOnResourcePropagation,
+        private requestCostApplication: CallbackForCheck
     ) {
         // Settlements are always placed as villages, and later upgraded to cities.
         this.settlementType = "village";
@@ -30,6 +32,19 @@ export class SettlementPiece {
     propagateResource(producedResource: ResourceType): void {
         const numberOfCards = (this.getType() == "city") ? 2n : 1n;
         this.acceptPropagatedResource(producedResource, numberOfCards);
+    }
+
+    upgradeToCity(): [boolean, string] {
+        if (this.settlementType == "city") {
+            return [false, "Already upgraded to city"];
+        }
+
+        if (!this.requestCostApplication()) {
+            return [false, "No piece for city available from player"];
+        }
+
+        this.settlementType = "city";
+        return [true, "Upgraded to city"];
     }
 
     private settlementType: SettlementType;

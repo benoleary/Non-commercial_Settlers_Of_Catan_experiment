@@ -29,27 +29,12 @@ export abstract class MutableHex extends ImmutableHex {
     getSettlementColorAndType(
         settlementCorner: HexCornerDirection
     ): [PlayerColor, SettlementType] | undefined {
-        const cornerSharers = this.getCornerSharing(settlementCorner);
-        const acceptedSettlementsOnCorner =
-            cornerSharers.map(
-                cornerSharer => cornerSharer[0].getAcceptedSettlement(cornerSharer[1])
-            )
-            .filter(acceptedSettlement => acceptedSettlement != undefined);
-
-        if (acceptedSettlementsOnCorner.length > 1) {
-            throw new Error(
-                `Somehow multiple hexes own a settlement on this hex's ${settlementCorner} corner`
-            );
-        }
-
-        if (acceptedSettlementsOnCorner.length < 1) {
+        const settlementOnCorner = this.getSettlement(settlementCorner);
+        if (settlementOnCorner == undefined) {
             return undefined;
         }
 
-        // Silly TypeScript, we have already filtered out all elements which are undefined.
-        const acceptedSettlement = acceptedSettlementsOnCorner[0]!;
-
-        return [acceptedSettlement.owningColor, acceptedSettlement.getType()];
+        return [settlementOnCorner.owningColor, settlementOnCorner.getType()];
     }
 
     setNeighbor(
@@ -271,6 +256,37 @@ export abstract class MutableHex extends ImmutableHex {
         ];
     }
 
+    upgradeToCity(
+        placementCorner: HexCornerDirection,
+        colorOfUpgradingPlayer: PlayerColor
+    ): [boolean, string] {
+        const settlementOnCorner = this.getSettlement(placementCorner);
+        if (settlementOnCorner == undefined) {
+            return [false, `No settlement on ${placementCorner} corner`];
+        }
+
+        if (settlementOnCorner.owningColor != colorOfUpgradingPlayer) {
+            return [
+                false,
+                `Settlement on ${placementCorner} corner`
+                + ` belongs to ${settlementOnCorner.owningColor}`
+                + ` so cannot be upgraded by player with color ${colorOfUpgradingPlayer}`
+            ];
+        }
+
+        const [isUpgraded, refusalMessage] = settlementOnCorner.upgradeToCity();
+
+        if (!isUpgraded) {
+            return [false, refusalMessage];
+        }
+
+        return [
+            true,
+            `A ${settlementOnCorner.owningColor} settlement`
+            + ` on ${placementCorner} corner was upgraded to a city`
+        ];
+    }
+
     hasAcceptedRoad(roadEdge: HexToHexDirection): boolean {
         return this.getAcceptedRoad(roadEdge) != undefined;
     }
@@ -354,6 +370,27 @@ export abstract class MutableHex extends ImmutableHex {
         settlementCorner: HexCornerDirection
     ): SettlementPiece | undefined {
         return this.acceptedSettlements[ImmutableHex.cornerIndex(settlementCorner)];
+    }
+
+    protected getSettlement(settlementCorner: HexCornerDirection): SettlementPiece | undefined {
+        const cornerSharers = this.getCornerSharing(settlementCorner);
+        const acceptedSettlementsOnCorner =
+            cornerSharers.map(
+                cornerSharer => cornerSharer[0].getAcceptedSettlement(cornerSharer[1])
+            )
+            .filter(acceptedSettlement => acceptedSettlement != undefined);
+
+        if (acceptedSettlementsOnCorner.length > 1) {
+            throw new Error(
+                `Somehow multiple hexes own a settlement on this hex's ${settlementCorner} corner`
+            );
+        }
+
+        if (acceptedSettlementsOnCorner.length < 1) {
+            return undefined;
+        }
+
+        return acceptedSettlementsOnCorner[0];
     }
 
     protected getEdgeSharing(hexEdge: HexToHexDirection): [MutableHex, HexToHexDirection][] {

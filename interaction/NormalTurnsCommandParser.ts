@@ -7,6 +7,12 @@ import { CommandParser, INVALID_INPUT_EFFECT } from "./CommandParser";
 type FunctionOfValidHexIndices =
     (rowIndexInBoardFromZero: number, hexIndexInRowFromZero: number) => RequestResult;
 
+const NEXT_TURN_ACTION_KEYWORD = "NEXT";
+const TRADE_ACTION_KEYWORD = "TRADE";
+const ROAD_ACTION_KEYWORD = "ROAD";
+const VILLAGE_ACTION_KEYWORD = "VILLAGE";
+const CITY_ACTION_KEYWORD = "CITY";
+
 export class NormalTurnsCommandParser implements CommandParser {
     constructor(private currentGame: Game) { }
 
@@ -41,7 +47,11 @@ export class NormalTurnsCommandParser implements CommandParser {
             "4) \"P village X Y Z\" to buy and place a settlement on row X, hex Y, corner Z",
             "   - e.g. \"2 village B 4 N\" to buy and place a settlement on the northern corner",
             "     of the easternmost hex of row B",
-            "   - placing a settlement costs blgw (1 brick + 1 lumber + 1 grain + 1 wool)"
+            "   - placing a settlement costs blgw (1 brick + 1 lumber + 1 grain + 1 wool)",
+            "5) \"P city X Y Z\" to upgrade a settlement on row X, hex Y, corner Z to a city",
+            "   - e.g. \"1 city C 5 NW\" to upgrade a settlement on the northwestern corner",
+            "     of the easternmost hex of row C",
+            "   - upgrading a settlement to a city costs ooogg (3 ore + 2 grain)"
         ].join("\n");
     }
 
@@ -55,20 +65,24 @@ export class NormalTurnsCommandParser implements CommandParser {
             ];
         }
 
-        if (actionWord == "NEXT") {
+        if (actionWord == NEXT_TURN_ACTION_KEYWORD) {
             return this.currentGame.beginNextNormalTurn(playerIdentifier);
         }
 
-        if (actionWord == "TRADE") {
+        if (actionWord == TRADE_ACTION_KEYWORD) {
             return this.performTrade(playerIdentifier, requestWords);
         }
 
-        if (actionWord == "ROAD") {
+        if (actionWord == ROAD_ACTION_KEYWORD) {
             return this.buildRoad(playerIdentifier, requestWords);
         }
 
-        if (actionWord == "VILLAGE") {
+        if (actionWord == VILLAGE_ACTION_KEYWORD) {
             return this.buildSettlement(playerIdentifier, requestWords);
+        }
+
+        if (actionWord == CITY_ACTION_KEYWORD) {
+            return this.buildCity(playerIdentifier, requestWords);
         }
 
         return [
@@ -85,7 +99,8 @@ export class NormalTurnsCommandParser implements CommandParser {
             || (requestWords[4]?.toUpperCase() != "GET")) {
             return [
                 "RefusedSameTurn",
-                "Required exactly 7 \"words\" in this order: player number, \"trade\","
+                "Required exactly 7 \"words\" in this order: player number,"
+                + ` \"${TRADE_ACTION_KEYWORD.toLowerCase()}\",`
                 + " accepting player name, \"give\", offered resources, \"get\","
                 + " resources to receive in exchange"
             ];
@@ -182,7 +197,7 @@ export class NormalTurnsCommandParser implements CommandParser {
     private buildRoad(playerIdentifier: string, requestWords: string[]): RequestResult {
         return this.buildPiece(
             requestWords,
-            "road",
+            `${ROAD_ACTION_KEYWORD.toLowerCase()}`,
             "edge of hex (NE/E/SE/SW/W/NW)",
             (rowIndexInBoardFromZero: number, hexIndexInRowFromZero: number) => {
                 const roadEdge = HexSelector.convertToHexToHex(requestWords[3]!);
@@ -206,7 +221,7 @@ export class NormalTurnsCommandParser implements CommandParser {
     private buildSettlement(playerIdentifier: string, requestWords: string[]): RequestResult {
         return this.buildPiece(
             requestWords,
-            "settlement",
+            `${VILLAGE_ACTION_KEYWORD.toLowerCase()}`,
             "corner of hex (N/NE/SE/S/SW/NW)",
             (rowIndexInBoardFromZero: number, hexIndexInRowFromZero: number) => {
                 const settlementCorner = HexSelector.convertToHexCorner(requestWords[3]!);
@@ -218,6 +233,30 @@ export class NormalTurnsCommandParser implements CommandParser {
                 }
 
                 return this.currentGame.buildSettlement(
+                        playerIdentifier,
+                        rowIndexInBoardFromZero,
+                        hexIndexInRowFromZero,
+                        settlementCorner
+                    );
+            }
+        );
+    }
+
+    private buildCity(playerIdentifier: string, requestWords: string[]): RequestResult {
+        return this.buildPiece(
+            requestWords,
+            `${CITY_ACTION_KEYWORD.toLowerCase()}`,
+            "corner of hex (N/NE/SE/S/SW/NW)",
+            (rowIndexInBoardFromZero: number, hexIndexInRowFromZero: number) => {
+                const settlementCorner = HexSelector.convertToHexCorner(requestWords[3]!);
+                if (settlementCorner == undefined) {
+                    return [
+                        INVALID_INPUT_EFFECT,
+                        `Could not understand ${requestWords[3]} as a valid corner of the chosen hex`
+                    ];
+                }
+
+                return this.currentGame.upgradeToCity(
                         playerIdentifier,
                         rowIndexInBoardFromZero,
                         hexIndexInRowFromZero,

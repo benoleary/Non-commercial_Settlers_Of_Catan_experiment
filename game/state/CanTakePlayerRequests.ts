@@ -39,4 +39,11 @@ export interface CanTakePlayerRequests {
         hexIndexFromZeroInRow: number,
         settlementCorner: HexCornerDirection
     ): [CanTakePlayerRequests, RequestResult]
+
+    upgradeToCity(
+        requestingPlayer: AuthenticatedPlayer,
+        rowIndexFromZeroInBoard: number,
+        hexIndexFromZeroInRow: number,
+        settlementCorner: HexCornerDirection
+    ): [CanTakePlayerRequests, RequestResult]
 }

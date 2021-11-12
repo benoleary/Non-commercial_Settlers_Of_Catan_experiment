@@ -171,6 +171,15 @@ export class InInitialPlacement implements CanTakePlayerRequests {
         return [this, ["RefusedSameTurn", "still in initial settlement placement phase"]];
     }
 
+    upgradeToCity(
+        requestingPlayer: AuthenticatedPlayer,
+        rowIndexFromZeroInBoard: number,
+        hexIndexFromZeroInRow: number,
+        settlementCorner: HexCornerDirection
+    ): [CanTakePlayerRequests, RequestResult] {
+        return [this, ["RefusedSameTurn", "still in initial settlement placement phase"]];
+    }
+
     private constructor(
         private internalState: InternalState,
         private playersInPlacementOrder: AuthenticatedPlayer[],

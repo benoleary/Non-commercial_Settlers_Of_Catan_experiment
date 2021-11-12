@@ -137,6 +137,7 @@ export class InNormalTurns implements CanTakePlayerRequests {
                     return [this, ["RefusedSameTurn", refusalMessage]];
                 }
 
+                // Placing a road could obviously change the longest road.
                 const successMessage =
                     `Player ${activePlayer.playerName} placed`
                     + ` a road on edge ${roadEdge}`
@@ -175,6 +176,7 @@ export class InNormalTurns implements CanTakePlayerRequests {
                     return [this, ["RefusedSameTurn", refusalMessage]];
                 }
 
+                // Placing a settlement could break the longest road.
                 const successMessage =
                     `Player ${activePlayer.playerName} placed`
                     + ` a village on corner ${settlementCorner}`
@@ -184,6 +186,41 @@ export class InNormalTurns implements CanTakePlayerRequests {
                 return this.applyCostsAndCheckForVictory(
                     activePlayer,
                     villageCost,
+                    successMessage
+                );
+            }
+        );
+    }
+
+    upgradeToCity(
+        requestingPlayer: AuthenticatedPlayer,
+        rowIndexFromZeroInBoard: number,
+        hexIndexFromZeroInRow: number,
+        settlementCorner: HexCornerDirection
+    ): [CanTakePlayerRequests, RequestResult] {
+        const cityCost = new ResourceCardSet(0n, 0n, 3n, 2n, 0n);
+        return this.validateActivePlayerAndValidHexThenPerformRequest(
+            requestingPlayer,
+            rowIndexFromZeroInBoard,
+            hexIndexFromZeroInRow,
+            cityCost,
+            (activePlayer: AuthenticatedPlayer, validHex: MutableHex) => {
+                const [isPlaced, refusalMessage] =
+                    validHex.upgradeToCity(settlementCorner, activePlayer.playerColor);
+
+                if (!isPlaced) {
+                    return [this, ["RefusedSameTurn", refusalMessage]];
+                }
+
+                // Upgrading a village to a city cannot change the longest road.
+                const successMessage =
+                    `Player ${activePlayer.playerName} upgrade`
+                    + ` a village on corner ${settlementCorner}`
+                    + ` of hex ${rowIndexFromZeroInBoard}-${hexIndexFromZeroInRow} to a city`;
+
+                return this.applyCostsAndCheckForVictory(
+                    activePlayer,
+                    cityCost,
                     successMessage
                 );
             }

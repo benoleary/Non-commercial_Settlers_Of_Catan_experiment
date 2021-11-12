@@ -34,7 +34,7 @@ export class PiecePool {
         );
     }
 
-    private createRoad(): RoadPiece | undefined {
+    createRoad(): RoadPiece | undefined {
         if (this.countOfRemainingRoadPieces <= 0n) {
             return undefined;
         }
@@ -43,14 +43,29 @@ export class PiecePool {
         return new RoadPiece(this.playerColor);
     }
 
-    private createVillage(): SettlementPiece | undefined {
+    createVillage(): SettlementPiece | undefined {
         if (this.countOfRemainingVillagePieces <= 0n) {
             return undefined;
         }
 
         this.countOfRemainingVillagePieces -= 1n;
         this.callbackOnVillageCreation();
-        return new SettlementPiece(this.playerColor, this.callbackForSettlement);
+        return new SettlementPiece(
+            this.playerColor,
+            this.callbackForSettlement,
+            this.applyCityUpgradeCostOrRefuse.bind(this)
+        );
+    }
+
+    applyCityUpgradeCostOrRefuse(): boolean {
+        if (this.countOfRemainingCityPieces <= 0n) {
+            return false;
+        }
+
+        this.countOfRemainingCityPieces -= 1n;
+        this.countOfRemainingVillagePieces += 1n;
+        this.callbackOnCityUpgrade();
+        return true;
     }
 
     private countOfRemainingRoadPieces: bigint;
