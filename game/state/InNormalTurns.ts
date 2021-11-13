@@ -16,7 +16,7 @@ type FunctionOfActivePlayerAndValidHex =
  * This class applies all the rules for the phase of the game which would be considered the "main"
  * phase of the game, afer the initial pieces have been placed: players rolling the dice for
  * production, making trades, and buying and placing pieces on the board (also buying and playing
- * development cards but these will not be implemented). It creaates an AfterVictory instance with
+ * development cards but these will not be implemented). It creates an AfterVictory instance with
  * its InternalState instance once an action results in a player reaching the threshold to win.
  */
 export class InNormalTurns implements CanTakePlayerRequests {
@@ -61,9 +61,10 @@ export class InNormalTurns implements CanTakePlayerRequests {
                 "SuccessfulNewTurn",
                 `Player ${requestingPlayer.playerName} passed the turn`
                 + ` to player ${this.getActivePlayer()!.playerName} who has now won`];
-            const nextRound =
-                AfterVictory.createAfterVictory(this.internalState, this.getActivePlayer()!);
-            return [nextRound, this.internalState.lastSuccessfulRequestResult];
+            return [
+                AfterVictory.createAfterVictory(this.internalState, this.getActivePlayer()!),
+                this.internalState.lastSuccessfulRequestResult
+            ];
         }
 
         const diceRollScore = this.beginTurn();
@@ -92,7 +93,8 @@ export class InNormalTurns implements CanTakePlayerRequests {
         if (!requestingPlayer.canAfford(offeredOutgoingResources)) {
             const offeredButNotAfforded = offeredOutgoingResources.asArray().join(", ");
             const refusalMessage =
-                `${requestingPlayer.playerName} cannot afford to offer ${offeredButNotAfforded}`;
+                `Player ${requestingPlayer.playerName} cannot afford`
+                + ` to offer ${offeredButNotAfforded}`;
             return [this, ["RefusedSameTurn", refusalMessage]];
         }
 
@@ -113,7 +115,7 @@ export class InNormalTurns implements CanTakePlayerRequests {
         }
 
         const successMessage =
-            `${requestingPlayer.playerName} gave ${givingText} and got ${gettingText}`;
+            `Player ${requestingPlayer.playerName} gave ${givingText} and got ${gettingText}`;
         return [this, ["SuccessfulSameTurn", successMessage]];
     }
 
@@ -214,7 +216,7 @@ export class InNormalTurns implements CanTakePlayerRequests {
 
                 // Upgrading a village to a city cannot change the longest road.
                 const successMessage =
-                    `Player ${activePlayer.playerName} upgrade`
+                    `Player ${activePlayer.playerName} upgraded`
                     + ` a village on corner ${settlementCorner}`
                     + ` of hex ${rowIndexFromZeroInBoard}-${hexIndexFromZeroInRow} to a city`;
 
@@ -279,7 +281,7 @@ export class InNormalTurns implements CanTakePlayerRequests {
         return [firstRoll, secondRoll];
     }
 
-    validateActivePlayerAndValidHexThenPerformRequest(
+    private validateActivePlayerAndValidHexThenPerformRequest(
         requestingPlayer: AuthenticatedPlayer,
         rowIndexFromZeroInBoard: number,
         hexIndexFromZeroInRow: number,

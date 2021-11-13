@@ -40,7 +40,7 @@ export class SettlementPiece {
         }
 
         if (!this.requestCostApplication()) {
-            return [false, "No piece for city available from player"];
+            return [false, "No piece for city available for player"];
         }
 
         this.settlementType = "city";

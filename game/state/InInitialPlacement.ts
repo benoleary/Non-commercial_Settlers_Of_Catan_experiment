@@ -103,7 +103,6 @@ export class InInitialPlacement implements CanTakePlayerRequests {
             ? (hexResource: ResourceType) => requestingPlayer.acceptResource(hexResource, 1n)
             : undefined;
 
-        const pieceColor = requestingPlayer.playerColor;
         const [isPlaced, refusalMessage] =
             chosenHex.acceptInitialSettlementAndRoad(
                 requestingPlayer.getVillageFactory(),
@@ -142,7 +141,7 @@ export class InInitialPlacement implements CanTakePlayerRequests {
     beginNextNormalTurn(
         requestingPlayer: AuthenticatedPlayer
     ): [CanTakePlayerRequests, RequestResult] {
-        return [this, ["RefusedSameTurn", "still in initial settlement placement phase"]];
+        return this.refuseNormalAction();
     }
 
     makeMaritimeTrade(
@@ -150,7 +149,7 @@ export class InInitialPlacement implements CanTakePlayerRequests {
         offeredOutgoingResources: ResourceCardSet,
         desiredIncomingResources: ResourceCardSet
     ): [CanTakePlayerRequests, RequestResult] {
-        return [this, ["RefusedSameTurn", "still in initial settlement placement phase"]];
+        return this.refuseNormalAction();
     }
 
     buildRoad(
@@ -159,7 +158,7 @@ export class InInitialPlacement implements CanTakePlayerRequests {
         hexIndexFromZeroInRow: number,
         roadEdge: HexToHexDirection
     ): [CanTakePlayerRequests, RequestResult] {
-        return [this, ["RefusedSameTurn", "still in initial settlement placement phase"]];
+        return this.refuseNormalAction();
     }
 
     buildSettlement(
@@ -168,7 +167,7 @@ export class InInitialPlacement implements CanTakePlayerRequests {
         hexIndexFromZeroInRow: number,
         settlementCorner: HexCornerDirection
     ): [CanTakePlayerRequests, RequestResult] {
-        return [this, ["RefusedSameTurn", "still in initial settlement placement phase"]];
+        return this.refuseNormalAction();
     }
 
     upgradeToCity(
@@ -177,7 +176,7 @@ export class InInitialPlacement implements CanTakePlayerRequests {
         hexIndexFromZeroInRow: number,
         settlementCorner: HexCornerDirection
     ): [CanTakePlayerRequests, RequestResult] {
-        return [this, ["RefusedSameTurn", "still in initial settlement placement phase"]];
+        return this.refuseNormalAction();
     }
 
     private constructor(
@@ -186,4 +185,8 @@ export class InInitialPlacement implements CanTakePlayerRequests {
         private isSecondRound: boolean,
         private createNextRound: (internalState: InternalState) => CanTakePlayerRequests
     ) { }
+
+    private refuseNormalAction(): [CanTakePlayerRequests, RequestResult] {
+        return [this, ["RefusedSameTurn", "still in initial settlement placement phase"]];
+    }
 }

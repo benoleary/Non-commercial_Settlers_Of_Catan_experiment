@@ -1,8 +1,12 @@
-import { PlayerNamesAndColorsInTurnOrder, Game } from "../game/Game";
+import { Game } from "../game/Game";
 import { BoardVisualization, PlayerVisualization } from "../visualization/visualization";
 import { CommandParser } from "./CommandParser";
 import promptSync from 'prompt-sync';
 
+/**
+ * This class performs the role of taking text from the command prompt as player input and printing
+ * the state of the game to the console as feedback to the players.
+ */
 export class ConsoleInterface {
     static readonly ERROR_SIGNIFIER = "ERROR";
     static readonly HELP_KEYWORD = "HELP";
@@ -10,13 +14,13 @@ export class ConsoleInterface {
         [ConsoleInterface.HELP_KEYWORD, `"${ConsoleInterface.HELP_KEYWORD}"`];
 
     constructor(
-        private consolePrompt: promptSync.Prompt,
         private playerNamesInTurnOrder: string[],
         private playerVisualization: PlayerVisualization,
         private currentGame: Game,
         private boardVisualization: BoardVisualization,
         private quitKeywords: string[]
     ) {
+        this.consolePrompt = promptSync(),
         this.quitKeywords = quitKeywords.map(quitKeyword => quitKeyword.toUpperCase());
         const quitKeywordEnumeration =
             quitKeywords.map(quitKeyword => `"${quitKeyword}"`).join(" or ");
@@ -109,4 +113,5 @@ export class ConsoleInterface {
 
     private readonly quitInstruction: string;
     private readonly helpInstruction: string;
+    private readonly consolePrompt: promptSync.Prompt;
 }

@@ -12,8 +12,8 @@ export class InternalState implements ReadableState {
     playersByName: {
         [playerName: string]: AuthenticatedPlayer
     }
-
     cardBank: CardBank;
+    lastSuccessfulRequestResult: RequestResult | undefined;
 
     viewBoard(): HexMatrix<ImmutableHex> {
         return this.hexBoard.viewBoard();
@@ -30,8 +30,6 @@ export class InternalState implements ReadableState {
     getLastSuccessfulRequestResult(): RequestResult | undefined {
         return this.lastSuccessfulRequestResult;
     }
-
-    public lastSuccessfulRequestResult: RequestResult | undefined;
 
     constructor(
         public hexBoard: HexBoard,

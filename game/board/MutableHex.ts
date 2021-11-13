@@ -12,6 +12,15 @@ import { HexCornerDirection, HexToHexDirection, ImmutableHex } from "./Immutable
  * is valid or not.
  */
 export abstract class MutableHex extends ImmutableHex {
+    /**
+     * This returns the color of the road which is on the given edge of this hex. It does not
+     * distinguish whether the road was built on this edge on this hex or on the edge on the
+     * neighboring hex.
+     *
+     * @param roadEdge The edge to examine
+     * @returns The color of the road on the edge if either this hex or its neighbor sharing the
+     *          accepted a road for the edge, or else undefined
+     */
     getRoadColor(roadEdge: HexToHexDirection): PlayerColor | undefined {
         const acceptedColor = this.getAcceptedRoad(roadEdge)?.owningColor;
         if (acceptedColor != undefined) {
@@ -189,9 +198,13 @@ export abstract class MutableHex extends ImmutableHex {
         // The road leading to this edge which allows a road to be placed on it might only be on an
         // edge of the neighboring hex.
         const isConnectedToSameColorRoad =
-            this.hasEdgeOrNeighborAllowingRoadOfColorOnEdge(roadFactory.pieceColor, placementEdge);
+            this.hasConnectionAllowingRoadOfColorOnEdge(roadFactory.pieceColor, placementEdge);
         if (!isConnectedToSameColorRoad) {
-            return [false, "No neighboring edge with road owned by same player"];
+            return [
+                false,
+                "No neighboring edge with road owned by same player"
+                + " (might be blocked by other player's settlement)"
+            ];
         }
 
         const roadForPlacement = roadFactory.createPiece();
@@ -256,6 +269,16 @@ export abstract class MutableHex extends ImmutableHex {
         ];
     }
 
+    /**
+     * This upgrades the settlement on the given corner as long as there is a settlement there
+     * which can be upgraded and belongs to the active player and if the player pays the cost.
+     *
+     * @param placementCorner The corner of the hex which should have a settlement which should get
+     *                        upgraded
+     * @param colorOfUpgradingPlayer The color of the player who wants to upgrade the settlement
+     *                               (players may not upgrade the settlements of other players)
+     * @returns True and a report if successful, false and an explanation if not
+     */
     upgradeToCity(
         placementCorner: HexCornerDirection,
         colorOfUpgradingPlayer: PlayerColor
@@ -287,6 +310,15 @@ export abstract class MutableHex extends ImmutableHex {
         ];
     }
 
+    /**
+     * This returns whether this hex edge has a road which was built on this hex. This is to be
+     * distinguished from checking if the result of getRoadColor is undefined, as that would
+     * return the road on the same edge but built on the neighboring hex.
+     *
+     * @param roadEdge The edge to examine for a road
+     * @returns True if there is a road on the edge which was built on this hex (rather than on the
+     *          neighbor sharing the hex)
+     */
     hasAcceptedRoad(roadEdge: HexToHexDirection): boolean {
         return this.getAcceptedRoad(roadEdge) != undefined;
     }
@@ -304,28 +336,37 @@ export abstract class MutableHex extends ImmutableHex {
         );
     }
 
-    hasEdgeAllowingRoadOfColorOnEdge(
-        pieceColor: PlayerColor,
-        placementEdge: HexToHexDirection
-    ): boolean {
-        return ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringEdge(placementEdge).some(
-            neighboringEdge => this.getRoadColor(neighboringEdge) == pieceColor
-        );
-    }
-
+    /**
+     * This checks both edges of this hex which touch the given corner for a road of the given
+     * color.
+     *
+     * @param pieceColor The color to look for
+     * @param hexCorner The corner touching the edges which should be checked
+     * @returns True if either edge sharing the corner has a road of the given color
+     */
     hasRoadOfColorLeadingToCorner(
         pieceColor: PlayerColor,
-        settlementCorner: HexCornerDirection
+        hexCorner: HexCornerDirection
     ): boolean {
         return (
-            ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringCorner(settlementCorner).some(
+            ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringCorner(hexCorner).some(
                 hexEdge => this.getRoadColor(hexEdge) == pieceColor
             )
         );
     }
 
+    /**
+     * This should record the given callback function and invoke it when this hex produces its
+     * resource 9using its resource as the argument).
+     *
+     * @param callbackFunction A function to invoke with the hex's resourec when it is produced
+     */
     abstract onResourceProductionEvent(callbackFunction: CallbackOnResourceProduction): void
 
+    /**
+     * This should perform the appropriate actions when this hex must produce its resource (such
+     * as invoking callbacks).
+     */
     abstract produceResource(): void
 
     protected static haveOnlyEmptySharedCorners(
@@ -427,68 +468,40 @@ export abstract class MutableHex extends ImmutableHex {
         return cornerSharers;
     }
 
-    protected hasNeighborWithRoadOfColorLeadingToCorner(
-        pieceColor: PlayerColor,
-        edgeSharedWithNeighbor: HexToHexDirection,
-        cornerSharedWithNeighbor: HexCornerDirection
-    ): boolean {
-        const neighboringHex = this.getMutableNeighbor(edgeSharedWithNeighbor);
-        if (neighboringHex == undefined) {
-            return false;
-        }
-        const cornerForNeighbor =
-            ImmutableHex.getCloserCornerNeighboringOppositeEdge(
-                edgeSharedWithNeighbor,
-                cornerSharedWithNeighbor
-            );
-        return neighboringHex.hasRoadOfColorLeadingToCorner(pieceColor, cornerForNeighbor);
-    }
-
-    protected hasEdgeOrNeighborAllowingRoadOfColorOnEdge(
+    protected hasConnectionAllowingRoadOfColorOnEdge(
         pieceColor: PlayerColor,
         placementEdge: HexToHexDirection
     ): boolean {
-        // If the edges of this hex allow this edge to get a road, that is sufficient.
-        if (this.hasEdgeAllowingRoadOfColorOnEdge(pieceColor, placementEdge)) {
-            return true;
-        }
-
-        // If this hex does not have a connecting road, then we check the connections on the hex
-        // which shares the edge.
-        const edgeSharer = this.getMutableNeighbor(placementEdge);
-
-        if (edgeSharer != undefined) {
-            return edgeSharer.hasEdgeAllowingRoadOfColorOnEdge(
-                pieceColor,
-                ImmutableHex.getOppositeEdge(placementEdge)
-            );
-        }
-
-        // If this hex does not have a connecting road and the edge is not shared with another hex
-        // (so it would be a road along a coast), then we have to check the neighbors on the
-        // corners of the target edge.
-        const [anticlockwiseEdge, clockwiseEdge] =
-            ImmutableHex.getAnticlockwiseAndClockwiseEdgesNeighboringEdge(placementEdge);
         const [anticlockwiseCorner, clockwiseCorner] =
             ImmutableHex.getAnticlockwiseAndClockwiseCornersNeighboringEdge(placementEdge);
 
-        // If the anticlockwise neighbor allows it, that is sufficient
-        const isAllowedByAnticlockwiseNeighbor =
-            this.hasNeighborWithRoadOfColorLeadingToCorner(
-                pieceColor,
-                anticlockwiseEdge,
-                anticlockwiseCorner
-            );
-        if (isAllowedByAnticlockwiseNeighbor) {
-            return true;
+        return (
+            this.isValidConnectionForRoadOfColor(anticlockwiseCorner, pieceColor)
+            || this.isValidConnectionForRoadOfColor(clockwiseCorner, pieceColor)
+        );
+    }
+
+    protected isValidConnectionForRoadOfColor(
+        cornerConnectingRoad: HexCornerDirection,
+        roadColor: PlayerColor
+    ): boolean {
+        const settlementOnCorner = this.getSettlement(cornerConnectingRoad);
+
+        // If there is a settlement, either it bleongs to someone else, in which case the road
+        // cannot use this corner as a connection, or it belongs to the same player, in which case,
+        // since this method is only called if the target edge is empty, there already is a road
+        // belonging to the placing player leading to the player's settlement on this corner.
+        if (settlementOnCorner != undefined) {
+            return settlementOnCorner.owningColor == roadColor;
         }
 
-        // At this point, whether or not the road is allowed is determined solely by the clockwise
-        // neighbor.
-        return this.hasNeighborWithRoadOfColorLeadingToCorner(
-            pieceColor,
-            clockwiseEdge,
-            clockwiseCorner
+        // If the corner is empty, then as long as one of the hexes on the corner has an edge with
+        // a road of the given color leading to the corner, the edge chosen for placement (which is
+        // empty or else we would not have ended up in this method) is connected to that road by
+        // that corner (cornerConnectingRoad of this hex).
+        const cornerSharers = this.getCornerSharing(cornerConnectingRoad);
+        return cornerSharers.some(
+            cornerSharer => cornerSharer[0].hasRoadOfColorLeadingToCorner(roadColor, cornerSharer[1])
         );
     }
 

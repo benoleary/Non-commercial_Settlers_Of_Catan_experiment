@@ -13,6 +13,10 @@ const ROAD_ACTION_KEYWORD = "ROAD";
 const VILLAGE_ACTION_KEYWORD = "VILLAGE";
 const CITY_ACTION_KEYWORD = "CITY";
 
+/**
+ * This class parses player text input and invokes Game methods for normal turns after the initial
+ * placement.
+ */
 export class NormalTurnsCommandParser implements CommandParser {
     constructor(private currentGame: Game) { }
 

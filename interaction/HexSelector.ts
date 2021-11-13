@@ -1,11 +1,15 @@
 import { HexCornerDirection, HexIndexInRow, HexToHexDirection, RowIndexInBoard }
     from "../game/board/hex";
 
+/**
+ * This class encapsulates the interpretation of text input from the players as grid indices
+ * starting from zero for the internal representation of the hexes.
+ */
 export class HexSelector {
     static convertToGridIndices(
         rowIdentifier: string,
         hexWithinRow: string
-    ): [RowIndexInBoard | undefined, HexIndexInRow | undefined] {
+    ): [(RowIndexInBoard | undefined), (HexIndexInRow | undefined)] {
         const uppercaseRow = rowIdentifier.toUpperCase();
         let rowIndex: RowIndexInBoard | undefined = undefined;
         if (uppercaseRow == "A") {

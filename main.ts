@@ -1,11 +1,10 @@
-import { HexBoard } from "./game/board/hex"
-import { Game, PlayerNamesAndColorsInTurnOrder} from "./game/Game"
-import { FlatRandomOneToSix } from "./game/die/die"
-import { BoardVisualization, PlayerVisualization } from "./visualization/visualization"
-import { ConsoleInterface } from "./interaction/console"
-import { InitialPlacementCommandParser } from "./interaction/InitialPlacementCommandParser"
-import { NormalTurnsCommandParser } from "./interaction/NormalTurnsCommandParser"
-import promptSync from 'prompt-sync';
+import { HexBoard } from "./game/board/hex";
+import { Game, PlayerNamesAndColorsInTurnOrder} from "./game/Game";
+import { FlatRandomOneToSix } from "./game/die/die";
+import { AsciiProvider, BoardVisualization, EmojiProvider, PlayerVisualization }
+    from "./visualization/visualization";
+import { ConsoleInterface, InitialPlacementCommandParser, NormalTurnsCommandParser }
+    from "./interaction/console";
 
 console.log("Example game played with occasional logging of relevant state");
 
@@ -49,14 +48,15 @@ let exampleGame =
         HexBoard.getFullyRandomBoard(),
         new FlatRandomOneToSix()
     );
-const hasEmojiArgument = process.argv.includes(emojiArgument)
-let playerVisualization = new PlayerVisualization(hasEmojiArgument);
-let boardVisualization = new BoardVisualization(hasEmojiArgument);
+
+const wideCharacterProvider =
+    process.argv.includes(emojiArgument) ? new EmojiProvider() : new AsciiProvider();
+let playerVisualization = new PlayerVisualization(wideCharacterProvider);
+let boardVisualization = new BoardVisualization(wideCharacterProvider);
 
 
 const consoleInterface =
     new ConsoleInterface(
-        promptSync(),
         playerNamesAndColorsInTurnOrder.map(playerNameAndColor => playerNameAndColor[0]),
         playerVisualization,
         exampleGame,

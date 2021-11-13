@@ -1,10 +1,11 @@
-import { VisualizationUsingWideCharacters } from "./VisualizationUsingWideCharacters";
 import { AuthenticatedPlayer } from "../game/player/player";
+import { WideCharacterProvider } from "./WideCharacterProvider";
 
-export class PlayerVisualization extends VisualizationUsingWideCharacters {
-    constructor(useEmoji: boolean) {
-        super(useEmoji);
-    }
+/**
+ * This class represents the players' assets as strings which can be printed to the console.
+ */
+export class PlayerVisualization {
+    constructor(private wideCharacterProvider: WideCharacterProvider) { }
 
     asString(displayedPlayer: AuthenticatedPlayer): string {
         const playerHand =

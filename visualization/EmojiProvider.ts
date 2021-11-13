@@ -1,5 +1,9 @@
 import { WideCharacterProvider } from "./WideCharacterProvider";
 
+/**
+ * This class provides emoji characters (usually 2 characters wide but sometimes not) to represent
+ * parts of game objects as "art".
+ */
 export class EmojiProvider implements WideCharacterProvider {
     // There is an issue with whether my terminal (Debian 10.2) displays emoji as
     // single or double width. Hence some of these have spaces and others not.
@@ -21,7 +25,7 @@ export class EmojiProvider implements WideCharacterProvider {
             return "🏡";
         }
         if (inputType == "city") {
-            return "🏛️";
+            return "🏛️ ";
         }
         if (inputType == "hills") {
             return "🧱";
@@ -60,6 +64,8 @@ export class EmojiProvider implements WideCharacterProvider {
             return "👺";
         }
 
+        // Absent roads are undefined, so should be blank. This has the horrible side effect of
+        // potentially hiding bugs by making them invisible.
         return "  ";
     }
 }

@@ -9,6 +9,10 @@ import { InInitialPlacement } from "./state/InInitialPlacement";
 
 export { PlayerNamesAndColorsInTurnOrder }
 
+/**
+ * Each instance of this class represents a whole game. The methods are enough to determine the
+ * state of the game as players would see it, and for players to make their moves.
+ */
 export class Game {
     constructor(
         public readonly playerNamesAndColorsInTurnOrder: PlayerNamesAndColorsInTurnOrder,

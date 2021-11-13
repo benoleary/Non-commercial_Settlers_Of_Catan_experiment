@@ -1,5 +1,8 @@
 import { WideCharacterProvider } from "./WideCharacterProvider";
 
+/**
+ * This class provides pairs of characters to represent parts of game objects as ASCII "art".
+ */
 export class AsciiProvider implements WideCharacterProvider {
     getFor(inputType: string | undefined): string {
         if (inputType == "red") {
@@ -57,6 +60,8 @@ export class AsciiProvider implements WideCharacterProvider {
             return " R";
         }
 
+        // Absent roads are undefined, so should be blank. This has the horrible side effect of
+        // potentially hiding bugs by making them invisible.
         return "  ";
     }
 }

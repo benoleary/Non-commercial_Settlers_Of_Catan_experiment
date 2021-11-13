@@ -1,15 +1,20 @@
 import { HexCornerDirection, HexToHexDirection, HexMatrix, ImmutableHex } from "../game/board/hex";
 import { ProductionRollScore } from "../game/resource/resource";
 import { WideCharacterProvider } from "./WideCharacterProvider";
-import { VisualizationUsingWideCharacters } from "./VisualizationUsingWideCharacters";
 
-export class BoardVisualization extends VisualizationUsingWideCharacters {
-    constructor(useEmoji: boolean) {
-        super(useEmoji);
-    }
+/**
+ * This class represents the board and the pieces on it as strings which can be printed to the
+ * console.
+ */
+export class BoardVisualization {
+    constructor(private wideCharacterProvider: WideCharacterProvider) { }
 
     asString(hexBoard: HexMatrix<ImmutableHex>): string {
-        // Reverse order because I read co-ordinates as vertical increasing from bottom to top.
+        // These are in reverse order because I read co-ordinates as vertical increasing from
+        // bottom to top. The northern or southern edge is chosen according to which row which
+        // shares the edge is longer - e.g. the middle row is used for both its northern and
+        // southern edges because the rows above and below would not print the contributions from
+        // the end hexes of the middle row.
         return [
             this.getNorthernEdge(hexBoard[4], 2),
             this.getRowBody(hexBoard[4], 2, "E"),
@@ -22,7 +27,8 @@ export class BoardVisualization extends VisualizationUsingWideCharacters {
             this.getSouthernEdge(hexBoard[1], 1),
             this.getRowBody(hexBoard[0], 2, "A"),
             this.getSouthernEdge(hexBoard[0], 2)
-        ].join("");
+        ]
+        .join("");
     }
 
     private static getOffsetText(offsetHexHalves: number, initialConstant: string): string {

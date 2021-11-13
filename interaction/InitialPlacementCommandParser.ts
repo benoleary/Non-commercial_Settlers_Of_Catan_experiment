@@ -3,6 +3,10 @@ import { RequestResult } from "../game/state/ReadableState";
 import { HexSelector } from "./HexSelector";
 import { CommandParser, INVALID_INPUT_EFFECT } from "./CommandParser";
 
+/**
+ * This class parses player text input and invokes Game methods for the initial placement phase of
+ * the game.
+ */
 export class InitialPlacementCommandParser implements CommandParser {
     constructor(private currentGame: Game) { }
 

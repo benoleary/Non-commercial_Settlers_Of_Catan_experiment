@@ -1,9 +1,6 @@
-/**
- * This file is for visualization of game elements, but only as an aid during
- * development. It only goes far enough for me to be satisfied that things are
- * working as intended.
- */
 import { BoardVisualization } from "./BoardVisualization";
 import { PlayerVisualization } from "./PlayerVisualization";
+import { EmojiProvider } from "./EmojiProvider";
+import { AsciiProvider } from "./AsciiProvider";
 
-export { BoardVisualization, PlayerVisualization }
+export { AsciiProvider, BoardVisualization, EmojiProvider, PlayerVisualization }

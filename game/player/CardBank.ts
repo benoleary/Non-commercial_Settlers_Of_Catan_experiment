@@ -35,7 +35,7 @@ export class CardBank {
 
         // We cannot make the trade if the card bank cannot give out its resource.
         if (this.getCount(desiredResourceAndCount[0]) < desiredResourceAndCount[1]) {
-            return false
+            return false;
         }
 
         const offeredResourceAndCount =

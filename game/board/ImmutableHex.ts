@@ -92,6 +92,13 @@ export abstract class ImmutableHex {
         return 5;
     }
 
+    /**
+     * This gets the edge opposite the given edge. The typical use case is to get the same edge as
+     * seen by the neighboring hex (e.g. if x has y as its eastern neighbor, x's E is y's W).
+     *
+     * @param hexEdge The edge of the hex opposite to the desired output edge
+     * @returns The edge of the hex opposite the input edge
+     */
     protected static getOppositeEdge(hexEdge: HexToHexDirection): HexToHexDirection {
         if (hexEdge == "NE") {
             return "SW";
@@ -110,28 +117,6 @@ export abstract class ImmutableHex {
         }
         // The only case left is NW.
         return "SE";
-    }
-
-    protected static getAnticlockwiseAndClockwiseEdgesNeighboringEdge(
-        hexEdge: HexToHexDirection
-    ): [HexToHexDirection, HexToHexDirection]  {
-        if (hexEdge == "NE") {
-            return ["NW", "E"];
-        }
-        if (hexEdge == "E") {
-            return ["NE", "SE"];
-        }
-        if (hexEdge == "SE") {
-            return ["E", "SW"];
-        }
-        if (hexEdge == "SW") {
-            return ["SE", "W"];
-        }
-        if (hexEdge == "W") {
-            return ["SW", "NW"];
-        }
-        // The only case left is NW.
-        return ["W", "NE"];
     }
 
     protected static getAnticlockwiseAndClockwiseEdgesNeighboringCorner(
@@ -156,6 +141,17 @@ export abstract class ImmutableHex {
         return ["W", "NW"];
     }
 
+    /**
+     * This gives the corner opposite the given corner through a line parallel to the given edge
+     * drawn through the center of the hex. The typical use case is to get the same corner as seen
+     * by the neighboring hex sharing it which also shares the given edge (e.g. the NE corner of x
+     * is the NW corner of y if x shares its E edge with y (which is y's W edge)).
+     * @param edgeToCorner The edge to use as the reflection axis
+     * @param cornerDirection The corner to reflect in the line parallel to edgeToCorner through
+     *                        the center of the hex
+     * @returns The corner opposite cornerDirection across a line parallel to edgeToCorner through
+     *          the center of the hex
+     */
     protected static getCloserCornerNeighboringOppositeEdge(
         edgeToCorner: HexToHexDirection,
         cornerDirection: HexCornerDirection

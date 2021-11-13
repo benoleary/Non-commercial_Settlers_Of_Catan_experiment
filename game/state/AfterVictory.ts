@@ -37,14 +37,14 @@ export class AfterVictory implements CanTakePlayerRequests {
         settlementCorner: HexCornerDirection,
         roadEdge: HexToHexDirection
     ): [CanTakePlayerRequests, RequestResult] {
-        return [this, this.internalState.lastSuccessfulRequestResult!];
+        return this.refuseAnyAction();
     }
 
 
     beginNextNormalTurn(
         requestingPlayer: AuthenticatedPlayer
     ): [CanTakePlayerRequests, RequestResult] {
-        return [this, this.internalState.lastSuccessfulRequestResult!];
+        return this.refuseAnyAction();
     }
 
     makeMaritimeTrade(
@@ -52,7 +52,7 @@ export class AfterVictory implements CanTakePlayerRequests {
         offeredOutgoingResources: ResourceCardSet,
         desiredIncomingResources: ResourceCardSet
     ): [CanTakePlayerRequests, RequestResult] {
-        return [this, this.internalState.lastSuccessfulRequestResult!];
+        return this.refuseAnyAction();
     }
 
     buildRoad(
@@ -61,7 +61,7 @@ export class AfterVictory implements CanTakePlayerRequests {
         hexIndexFromZeroInRow: number,
         roadEdge: HexToHexDirection
     ): [CanTakePlayerRequests, RequestResult] {
-        return [this, this.internalState.lastSuccessfulRequestResult!];
+        return this.refuseAnyAction();
     }
 
     buildSettlement(
@@ -70,7 +70,7 @@ export class AfterVictory implements CanTakePlayerRequests {
         hexIndexFromZeroInRow: number,
         settlementCorner: HexCornerDirection
     ): [CanTakePlayerRequests, RequestResult] {
-        return [this, this.internalState.lastSuccessfulRequestResult!];
+        return this.refuseAnyAction();
     }
 
     upgradeToCity(
@@ -79,7 +79,7 @@ export class AfterVictory implements CanTakePlayerRequests {
         hexIndexFromZeroInRow: number,
         settlementCorner: HexCornerDirection
     ): [CanTakePlayerRequests, RequestResult] {
-        return [this, this.internalState.lastSuccessfulRequestResult!];
+        return this.refuseAnyAction();
     }
 
 
@@ -90,12 +90,16 @@ export class AfterVictory implements CanTakePlayerRequests {
         this.internalState.gamePhase = "GameOver";
 
         const finalScores =
-            this.internalState.playersInTurnOrder.map(
-                gamePlayer => `${gamePlayer.playerName}: ${gamePlayer.getVictoryPointScore()}`
-            ).join(", ");
+            this.internalState.playersInTurnOrder
+            .map(gamePlayer => `${gamePlayer.playerName}: ${gamePlayer.getVictoryPointScore()}`)
+            .join(", ");
         this.internalState.lastSuccessfulRequestResult = [
             "RefusedGameOver",
             `Game over, won by ${this.winningPlayer.playerName} - final scores: ${finalScores}`
         ];
+    }
+
+    private refuseAnyAction(): [CanTakePlayerRequests, RequestResult] {
+        return [this, this.internalState.lastSuccessfulRequestResult!];
     }
 }

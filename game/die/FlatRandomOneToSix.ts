@@ -6,6 +6,9 @@ import { SixSidedDie, SixSidedDieScore } from "./SixSidedDie";
  */
 export class FlatRandomOneToSix implements SixSidedDie {
     newRoll(): SixSidedDieScore {
+        // I could use Math.floor or Math.ceil and turn the results into bigints, but then it
+        // would not be obvious to TypeScript that the results are within the SixSidedDieScore
+        // type.
         const betweenZeroAndSix = Math.random() * 6.0;
         if (betweenZeroAndSix >= 5.0) {
             return 6n;

@@ -9,7 +9,7 @@ export type ProductionRollScore = 2n | 3n | 4n | 5n | 6n | 8n | 9n | 10n | 11n |
 export const RobberActivationScore = 7n;
 
 /**
- * This clas exists to represent a set of fungible resource cards, whether as the resources owned
+ * This class exists to represent a set of fungible resource cards, whether as the resources owned
  * by a player, or to represent the resources offered or desired in a trade, or whatever.
  */
 export class ResourceCardSet {
@@ -41,7 +41,6 @@ export class ResourceCardSet {
         if (resourceType == "wool") {
             return this.woolCount;
         }
-
         return 0n;
     }
 
@@ -52,7 +51,7 @@ export class ResourceCardSet {
             && (this.oreCount >= resourceCost.oreCount)
             && (this.grainCount >= resourceCost.grainCount)
             && (this.woolCount >= resourceCost.woolCount)
-        )
+        );
     }
 
     asArray(): ResourceType[] {
